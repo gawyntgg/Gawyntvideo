@@ -814,7 +814,6 @@
         // as modern browsers often support WebRTC on file:// anyway.
         if (window.location.protocol === 'file:') {
             console.warn("⚠️ WARNING: Running via 'file://'. If you encounter CORS or permission errors, please host it using a local server (like Live Server).");
-            // alert("⚠️ WARNING: WebRTC and Firebase ES Modules require a web server to work properly.\n\nOpening this file via 'file://' will cause permission errors and CORS blocks. Please host it using a local server (like Live Server in VS Code) or deploy it to a web host.");
         }
 
         // Import Firebase SDKs (using official CDN for modular v10)
@@ -851,6 +850,11 @@
         let secondsElapsed = 0;
         
         let currentMemeQuery = ""; // Tracks search state for the meme loader
+
+        // Firebase Listener Unsubscribers (CRITICAL FIX FOR MEMORY/GHOST ERRORS)
+        let unsubCall = null;
+        let unsubOffer = null;
+        let unsubAnswer = null;
 
         // Standard Google STUN Servers for ICE Candidate discovery
         const rtcConfiguration = {
@@ -1019,7 +1023,7 @@
 
             // Connection state changes
             peerConnection.onconnectionstatechange = () => {
-                if(peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+                if(peerConnection && (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed')) {
                     showToast("User disconnected.", "error");
                     hangUp();
                 }
@@ -1051,23 +1055,24 @@
                 initPeerConnection();
                 setupDataChannel(true);
 
-                // Generate a random 6-digit number to act as the room ID
                 roomId = Math.floor(100000 + Math.random() * 900000).toString();
                 
-                // Reference to Firestore collections using the short ID
                 const callDoc = doc(db, "calls", roomId);
                 displayRoomId.innerText = roomId;
 
                 const offerCandidates = collection(callDoc, "offerCandidates");
                 const answerCandidates = collection(callDoc, "answerCandidates");
 
-                // Get ICE candidates and save to Firestore
+                // Get ICE candidates and save to Firestore safely
                 peerConnection.onicecandidate = event => {
                     if (event.candidate) {
-                        // FIX: Remove undefined fields that cause Firestore to crash
-                        const candidateObj = event.candidate.toJSON();
-                        Object.keys(candidateObj).forEach(key => candidateObj[key] === undefined && delete candidateObj[key]);
-                        addDoc(offerCandidates, candidateObj);
+                        // FIX: Explicitly mapping properties guarantees Firebase will not crash during serialization
+                        const candidateObj = {
+                            candidate: event.candidate.candidate,
+                            sdpMid: event.candidate.sdpMid,
+                            sdpMLineIndex: event.candidate.sdpMLineIndex
+                        };
+                        addDoc(offerCandidates, candidateObj).catch(err => console.error("Error adding offer candidate:", err));
                     }
                 };
 
@@ -1084,20 +1089,29 @@
                 showToast("Call code generated! Share it to connect.", "success");
 
                 // Listen for remote Answer
-                onSnapshot(callDoc, (snapshot) => {
+                unsubCall = onSnapshot(callDoc, (snapshot) => {
                     const data = snapshot.data();
-                    if (!peerConnection.currentRemoteDescription && data?.answer) {
+                    if (peerConnection && !peerConnection.currentRemoteDescription && data?.answer) {
                         const answerDescription = new RTCSessionDescription(data.answer);
-                        peerConnection.setRemoteDescription(answerDescription);
+                        peerConnection.setRemoteDescription(answerDescription).catch(e => console.error("Error setting remote desc:", e));
                     }
                 });
 
                 // Listen for remote ICE candidates
-                onSnapshot(answerCandidates, (snapshot) => {
+                unsubAnswer = onSnapshot(answerCandidates, (snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
                             const candidate = new RTCIceCandidate(change.doc.data());
-                            peerConnection.addIceCandidate(candidate);
+                            // FIX: Prevent race condition by ensuring RemoteDescription is set before adding ICE candidate
+                            if (peerConnection && peerConnection.remoteDescription) {
+                                peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding ICE candidate:", e));
+                            } else {
+                                setTimeout(() => {
+                                    if (peerConnection && peerConnection.remoteDescription) {
+                                        peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding deferred ICE candidate:", e));
+                                    }
+                                }, 1500); // 1.5s queue delay gives the connection time to align
+                            }
                         }
                     });
                 });
@@ -1118,10 +1132,14 @@
         // JOIN A CALL (Callee)
         async function joinCall() {
             try {
+                // Prevent duplicate processing
+                btnJoin.disabled = true;
+
                 // Strip any accidental spaces out of the entered text
                 const inputCode = callCodeInput.value.trim();
                 if (!inputCode) {
                     showToast("Please enter a valid call code.", "error");
+                    btnJoin.disabled = false;
                     return;
                 }
 
@@ -1130,6 +1148,7 @@
                 
                 if (!callSnapshot.exists()) {
                     showToast("Call code not found. Please check and try again.", "error");
+                    btnJoin.disabled = false;
                     return;
                 }
                 
@@ -1137,11 +1156,15 @@
                 const callData = callSnapshot.data();
                 if (!callData || !callData.offer) {
                     showToast("Call is no longer valid or incomplete.", "error");
+                    btnJoin.disabled = false;
                     return;
                 }
 
                 // FIX: Request camera and microphone permissions BEFORE joining the call
-                if (!await getLocalMedia()) return;
+                if (!await getLocalMedia()) {
+                    btnJoin.disabled = false;
+                    return;
+                }
                 
                 roomId = inputCode;
                 displayRoomId.innerText = roomId;
@@ -1153,13 +1176,16 @@
                 const offerCandidates = collection(callDoc, "offerCandidates");
                 const answerCandidates = collection(callDoc, "answerCandidates");
 
-                // Save ICE Candidates
+                // Save ICE Candidates safely
                 peerConnection.onicecandidate = event => {
                     if (event.candidate) {
-                        // FIX: Remove undefined fields that cause Firestore to crash
-                        const candidateObj = event.candidate.toJSON();
-                        Object.keys(candidateObj).forEach(key => candidateObj[key] === undefined && delete candidateObj[key]);
-                        addDoc(answerCandidates, candidateObj);
+                        // FIX: Explicitly mapping properties guarantees Firebase will not crash during serialization
+                        const candidateObj = {
+                            candidate: event.candidate.candidate,
+                            sdpMid: event.candidate.sdpMid,
+                            sdpMLineIndex: event.candidate.sdpMLineIndex
+                        };
+                        addDoc(answerCandidates, candidateObj).catch(err => console.error("Error adding answer candidate:", err));
                     }
                 };
 
@@ -1180,14 +1206,24 @@
                 waitingOverlay.style.display = 'none'; // Callee doesn't wait
 
                 // Listen for caller ICE candidates
-                onSnapshot(offerCandidates, (snapshot) => {
+                unsubOffer = onSnapshot(offerCandidates, (snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
                             const candidate = new RTCIceCandidate(change.doc.data());
-                            peerConnection.addIceCandidate(candidate);
+                            if (peerConnection && peerConnection.remoteDescription) {
+                                peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding ICE candidate:", e));
+                            } else {
+                                setTimeout(() => {
+                                    if (peerConnection && peerConnection.remoteDescription) {
+                                        peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding deferred ICE candidate:", e));
+                                    }
+                                }, 1500); 
+                            }
                         }
                     });
                 });
+                
+                btnJoin.disabled = false;
             } catch (error) {
                 console.error("Error joining call:", error);
                 
@@ -1198,12 +1234,21 @@
                 } else {
                     showToast("Error joining call. Check console/permissions.", "error");
                 }
+                btnJoin.disabled = false;
                 hangUp();
             }
         }
 
         // HANG UP & CLEANUP
         function hangUp() {
+            // FIX: Purge old Firebase listeners so ghost callbacks don't attempt to access a null connection
+            if (unsubCall) unsubCall();
+            if (unsubOffer) unsubOffer();
+            if (unsubAnswer) unsubAnswer();
+            unsubCall = null;
+            unsubOffer = null;
+            unsubAnswer = null;
+
             if (peerConnection) {
                 peerConnection.close();
                 peerConnection = null;
@@ -1513,7 +1558,7 @@
             }
         });
 
-        // ADDED: Listens for Enter key press on the call code input specifically
+        // Listens for Enter key press on the call code input specifically
         callCodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') joinCall();
         });
