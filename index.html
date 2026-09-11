@@ -809,9 +809,12 @@
          ========================================= -->
     <!-- Using ES Modules for Firebase Modular SDK -->
     <script type="module">
-        // FIX: Check if running via local file protocol which blocks modules and camera permissions
+        // FIX: Check if running via local file protocol. Instead of a blocking alert, 
+        // we log it to the console to prevent annoying the user before clicking join, 
+        // as modern browsers often support WebRTC on file:// anyway.
         if (window.location.protocol === 'file:') {
-            alert("⚠️ WARNING: WebRTC and Firebase ES Modules require a web server to work properly.\n\nOpening this file via 'file://' will cause permission errors and CORS blocks. Please host it using a local server (like Live Server in VS Code) or deploy it to a web host.");
+            console.warn("⚠️ WARNING: Running via 'file://'. If you encounter CORS or permission errors, please host it using a local server (like Live Server).");
+            // alert("⚠️ WARNING: WebRTC and Firebase ES Modules require a web server to work properly.\n\nOpening this file via 'file://' will cause permission errors and CORS blocks. Please host it using a local server (like Live Server in VS Code) or deploy it to a web host.");
         }
 
         // Import Firebase SDKs (using official CDN for modular v10)
@@ -960,6 +963,13 @@
         // ==========================================
         async function getLocalMedia() {
             try {
+                // FIX: Check if mediaDevices exists (prevents console crash on insecure networks like HTTP IPs)
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showToast("Camera/Microphone access requires a secure connection (HTTPS or localhost).", "error");
+                    console.error("navigator.mediaDevices is undefined. Secure context required.");
+                    return false;
+                }
+
                 localStream = await navigator.mediaDevices.getUserMedia({
                     video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
                     audio: true
@@ -968,7 +978,14 @@
                 return true;
             } catch (error) {
                 console.error("Error accessing media devices.", error);
-                showToast("Camera/Microphone access denied. Check browser permissions and ensure you are on HTTPS/Localhost.", "error");
+                // FIX: Better error handling to explain exactly why permission failed
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    showToast("Camera/Microphone blocked! Please allow permissions in your browser.", "error");
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    showToast("No camera or microphone found on this device.", "error");
+                } else {
+                    showToast("Error accessing Camera/Microphone. Check browser settings.", "error");
+                }
                 return false;
             }
         }
@@ -1228,6 +1245,10 @@
         btnToggleMic.addEventListener('click', () => {
             if (!localStream) return;
             const audioTrack = localStream.getAudioTracks()[0];
+            if (!audioTrack) {
+                showToast("No microphone found.", "error");
+                return;
+            }
             if (audioTrack.enabled) {
                 audioTrack.enabled = false;
                 btnToggleMic.classList.add('active-danger');
@@ -1245,6 +1266,10 @@
         btnToggleCam.addEventListener('click', () => {
             if (!localStream) return;
             const videoTrack = localStream.getVideoTracks()[0];
+            if (!videoTrack) {
+                showToast("No camera found.", "error");
+                return;
+            }
             if (videoTrack.enabled) {
                 videoTrack.enabled = false;
                 btnToggleCam.classList.add('active-danger');
