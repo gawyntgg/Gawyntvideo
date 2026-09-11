@@ -136,6 +136,8 @@
             font-size: 1rem;
             outline: none;
             transition: all 0.3s ease;
+            display: flex;
+            letter-spacing: 2px;
         }
 
         input[type="text"]:focus {
@@ -231,7 +233,9 @@
             background: rgba(0,0,0,0.6);
             padding: 8px 15px;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -506,6 +510,7 @@
             color: white;
             outline: none;
             width: 100%;
+            letter-spacing: normal; /* Override the login one */
         }
         .chat-input-area input:focus { border-color: var(--primary); }
 
@@ -566,6 +571,7 @@
             color: white;
             outline: none;
             font-size: 0.85rem;
+            letter-spacing: normal; /* Override the login one */
         }
         
         .meme-search-container input:focus { border-color: var(--primary); }
@@ -694,7 +700,7 @@
             <div class="divider">OR</div>
             
             <div class="action-group">
-                <input type="text" id="call-code-input" placeholder="Enter Call Code here...">
+                <input type="text" id="call-code-input" placeholder="Enter 6-digit Code here...">
                 <button id="btn-join" class="btn-secondary">
                     <i class="fa-solid fa-right-to-bracket"></i> Join Call
                 </button>
@@ -1021,9 +1027,11 @@
             initPeerConnection();
             setupDataChannel(true);
 
-            // Reference to Firestore collections
-            const callDoc = doc(collection(db, "calls"));
-            roomId = callDoc.id;
+            // Generate a random 6-digit number to act as the room ID
+            roomId = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Reference to Firestore collections using the short ID
+            const callDoc = doc(db, "calls", roomId);
             displayRoomId.innerText = roomId;
 
             const offerCandidates = collection(callDoc, "offerCandidates");
@@ -1070,6 +1078,7 @@
 
         // JOIN A CALL (Callee)
         async function joinCall() {
+            // Strip any accidental spaces out of the entered text
             const inputCode = callCodeInput.value.trim();
             if (!inputCode) {
                 showToast("Please enter a valid call code.", "error");
@@ -1080,7 +1089,14 @@
             const callSnapshot = await getDoc(callDoc);
             
             if (!callSnapshot.exists()) {
-                showToast("Call code not found.", "error");
+                showToast("Call code not found. Please check and try again.", "error");
+                return;
+            }
+            
+            // Check to ensure data is present to prevent crashes
+            const callData = callSnapshot.data();
+            if (!callData || !callData.offer) {
+                showToast("Call is no longer valid or incomplete.", "error");
                 return;
             }
 
@@ -1104,7 +1120,6 @@
             };
 
             // Get Offer from Firestore
-            const callData = callSnapshot.data();
             const offerDescription = callData.offer;
             await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
