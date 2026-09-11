@@ -1076,8 +1076,7 @@
                 unsubCall = onSnapshot(callDoc, (snapshot) => {
                     const data = snapshot.data();
                     if (peerConnection && !peerConnection.currentRemoteDescription && data?.answer) {
-                        const answerDescription = new RTCSessionDescription(data.answer);
-                        peerConnection.setRemoteDescription(answerDescription).catch(e => console.error("Error setting remote desc:", e));
+                        peerConnection.setRemoteDescription(data.answer).catch(e => console.error("Error setting remote desc:", e));
                     }
                 });
 
@@ -1103,7 +1102,7 @@
                     showToast("Firebase Permission Denied! Check Firestore Rules.", "error");
                     alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}");
                 } else {
-                    showToast("Failed to create call. Check console.", "error");
+                    showToast(`Failed to create call: ${error.name || 'Error'} - ${error.message || 'See console for details.'}`, "error");
                 }
                 hangUp();
             }
@@ -1177,7 +1176,7 @@
                 };
 
                 const offerDescription = callData.offer;
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
+                await peerConnection.setRemoteDescription(offerDescription);
 
                 const answerDescription = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answerDescription);
@@ -1214,7 +1213,7 @@
                     showToast("Firebase Rules blocked access! Please update console rules.", "error");
                     alert("FIREBASE PERMISSIONS EXPIRED:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}");
                 } else {
-                    showToast("Error joining call. Check console/permissions.", "error");
+                    showToast(`Error joining call: ${error.name || 'Error'} - ${error.message || 'Check console for details.'}`, "error");
                 }
                 btnJoin.disabled = false;
                 hangUp(); // Safe reset if something goes wrong midway
