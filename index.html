@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gawynt Video</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* =========================================
+           CSS VARIABLES & RESET
+           ========================================= */
+        :root {
+            --primary: #6c5ce7;
+            --primary-hover: #5b4bc4;
+            --secondary: #00cec9;
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-light: #f8fafc;
+            --danger: #ff7675;
+            --success: #00b894;
+            --panel-width: 350px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        /* =========================================
+           BACKGROUND ANIMATION CANVAS
+           ========================================= */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* =========================================
+           APP CONTAINER & GLASSMORPHISM
+           ========================================= */
+        #app {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* =========================================
+           LANDING VIEW (CREATE / JOIN)
+           ========================================= */
+        #landing-view {
+            width: 90%;
+            max-width: 500px;
+            padding: 40px;
+            text-align: center;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+        }
+
+        .logo-container i {
+            font-size: 3rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: #cbd5e1;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .action-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.2);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 10px rgba(0, 206, 201, 0.3);
+        }
+
+        button {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--secondary);
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 206, 201, 0.4);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #64748b;
+            margin: 20px 0;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .divider:not(:empty)::before { margin-right: .25em; }
+        .divider:not(:empty)::after { margin-left: .25em; }
+
+        /* =========================================
+           CALL VIEW (VIDEO GRID & CONTROLS)
+           ========================================= */
+        #call-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: row;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .video-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .header-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .room-badge {
+            background: rgba(0,0,0,0.6);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--secondary);
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .timer-badge {
+            background: rgba(0,0,0,0.6);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-variant-numeric: tabular-nums;
+            border: 1px solid var(--glass-border);
+        }
+
+        .video-grid {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            height: calc(100% - 100px);
+            position: relative;
+        }
+
+        /* Remote Video (Main) */
+        #remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
+            background: #000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Local Video (Floating PIP style) */
+        #local-video {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid var(--glass-border);
+            background: #111;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            z-index: 5;
+            transition: transform 0.3s ease;
+        }
+        
+        #local-video:hover {
+            transform: scale(1.05);
+        }
+
+        /* Loading / Waiting state */
+        .waiting-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 2;
+        }
+        .waiting-message i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* =========================================
+           CONTROL BAR
+           ========================================= */
+        .controls-bar {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            padding: 15px 25px;
+            z-index: 10;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-5px);
+        }
+
+        .control-btn.active-danger {
+            background: var(--danger);
+            color: white;
+        }
+        .control-btn.active-danger:hover { background: #d63031; }
+
+        .control-btn.active-primary {
+            background: var(--primary);
+        }
+
+        /* Tooltip */
+        .control-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .control-btn:hover::after { opacity: 1; }
+
+        .btn-leave {
+            background: var(--danger);
+            width: 70px;
+            border-radius: 25px;
+        }
+        .btn-leave:hover { background: #d63031; }
+
+        /* =========================================
+           CHAT SIDEBAR
+           ========================================= */
+        #chat-sidebar {
+            width: var(--panel-width);
+            height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            right: calc(-1 * var(--panel-width)); /* Hidden by default */
+            top: 0;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 20;
+        }
+
+        #chat-sidebar.open {
+            right: 0;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .close-chat {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+        .close-chat:hover { color: white; }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Custom Scrollbar for chat */
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+            animation: slideInMsg 0.3s ease;
+        }
+
+        @keyframes slideInMsg {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.self {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.remote {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--glass-border);
+            color: white;
+            border-bottom-left-radius: 2px;
+        }
+
+        .msg-time {
+            display: block;
+            font-size: 0.7rem;
+            margin-top: 5px;
+            opacity: 0.7;
+            text-align: right;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            padding: 10px 15px;
+            border-radius: 20px;
+            color: white;
+            outline: none;
+        }
+        .chat-input-area input:focus { border-color: var(--primary); }
+
+        .chat-input-area button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+            background: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* =========================================
+           TOAST NOTIFICATIONS
+           ========================================= */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: rgba(15, 23, 42, 0.9);
+            border-left: 4px solid var(--primary);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInToast 0.4s ease, fadeOutToast 0.4s ease 3s forwards;
+        }
+
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+
+        @keyframes slideInToast {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOutToast {
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            #local-video { width: 150px; height: 100px; }
+            .controls-bar { width: 95%; flex-wrap: wrap; justify-content: center; }
+            #chat-sidebar { width: 100%; right: -100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Canvas for Particles -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Main App Container -->
+    <div id="app">
+        
+        <!-- =========================================
+             LANDING VIEW
+             ========================================= -->
+        <div id="landing-view" class="glass-panel">
+            <div class="logo-container">
+                <i class="fa-solid fa-video"></i>
+            </div>
+            <h1>Gawynt Video</h1>
+            <p class="subtitle">Secure, high-quality peer-to-peer video calls.</p>
+            
+            <div class="action-group">
+                <button id="btn-create" class="btn-primary">
+                    <i class="fa-solid fa-plus"></i> Generate a Call Code
+                </button>
+            </div>
+            
+            <div class="divider">OR</div>
+            
+            <div class="action-group">
+                <input type="text" id="call-code-input" placeholder="Enter Call Code here...">
+                <button id="btn-join" class="btn-secondary">
+                    <i class="fa-solid fa-right-to-bracket"></i> Join Call
+                </button>
+            </div>
+        </div>
+
+        <!-- =========================================
+             CALL VIEW
+             ========================================= -->
+        <div id="call-view">
+            <div class="video-container" id="video-container">
+                <!-- Info Header -->
+                <div class="header-info glass-panel">
+                    <div class="room-badge">
+                        <i class="fa-solid fa-fingerprint"></i>
+                        <span id="display-room-id">...</span>
+                        <button class="copy-btn" id="btn-copy-code" title="Copy Code">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="timer-badge" id="call-timer">00:00</div>
+                </div>
+
+                <!-- Video Grid -->
+                <div class="video-grid">
+                    <video id="remote-video" autoplay playsinline></video>
+                    <video id="local-video" autoplay playsinline muted></video>
+                    
+                    <div id="waiting-overlay" class="waiting-message">
+                        <i class="fa-solid fa-circle-notch"></i>
+                        <h2>Waiting for others to join...</h2>
+                        <p>Share the call code to start.</p>
+                    </div>
+                </div>
+
+                <!-- Control Bar -->
+                <div class="controls-bar glass-panel">
+                    <button class="control-btn" id="btn-toggle-mic" data-tooltip="Microphone (M)">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    <button class="control-btn" id="btn-toggle-cam" data-tooltip="Camera (V)">
+                        <i class="fa-solid fa-video"></i>
+                    </button>
+                    <button class="control-btn" id="btn-share-screen" data-tooltip="Share Screen">
+                        <i class="fa-solid fa-desktop"></i>
+                    </button>
+                    <button class="control-btn" id="btn-pip" data-tooltip="Picture in Picture">
+                        <i class="fa-solid fa-clone"></i>
+                    </button>
+                    <button class="control-btn" id="btn-toggle-chat" data-tooltip="Toggle Chat">
+                        <i class="fa-solid fa-message"></i>
+                    </button>
+                    <button class="control-btn btn-leave" id="btn-leave" data-tooltip="Leave Call">
+                        <i class="fa-solid fa-phone-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Sidebar -->
+            <div id="chat-sidebar">
+                <div class="chat-header">
+                    <h3><i class="fa-solid fa-comments"></i> Chat</h3>
+                    <button class="close-chat" id="btn-close-chat"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages go here -->
+                    <div style="text-align:center; font-size: 0.8rem; color:#64748b; margin-top: 10px;">
+                        End-to-end encrypted chat via WebRTC
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Type a message...">
+                    <button id="btn-send-msg" class="btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+
+    <!-- =========================================
+         JAVASCRIPT & FIREBASE WEBRTC LOGIC
+         ========================================= -->
+    <!-- Using ES Modules for Firebase Modular SDK -->
+    <script type="module">
+        // Import Firebase SDKs (using official CDN for modular v10)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ==========================================
+        // 1. FIREBASE CONFIGURATION (Provided by User)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBuWWnqDX5mUra5pF3uuBxEVSKjcESifTk",
+            authDomain: "gawynt-hub.firebaseapp.com",
+            databaseURL: "https://gawynt-hub-default-rtdb.firebaseio.com",
+            projectId: "gawynt-hub",
+            storageBucket: "gawynt-hub.firebasestorage.app",
+            messagingSenderId: "330651852035",
+            appId: "1:330651852035:web:db931f867da21b6a519d36",
+            measurementId: "G-XLXGTVSPXT"
+        };
+
+        // Initialize Firebase & Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ==========================================
+        // 2. GLOBAL VARIABLES & WEBRTC CONFIG
+        // ==========================================
+        let localStream = null;
+        let remoteStream = null;
+        let peerConnection = null;
+        let dataChannel = null;
+        let roomId = null;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+
+        // Standard Google STUN Servers for ICE Candidate discovery
+        const rtcConfiguration = {
+            iceServers: [
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        };
+
+        // DOM Elements
+        const landingView = document.getElementById('landing-view');
+        const callView = document.getElementById('call-view');
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+        const callCodeInput = document.getElementById('call-code-input');
+        const displayRoomId = document.getElementById('display-room-id');
+        const waitingOverlay = document.getElementById('waiting-overlay');
+        const chatSidebar = document.getElementById('chat-sidebar');
+        const videoContainer = document.getElementById('video-container');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+
+        // Buttons
+        const btnCreate = document.getElementById('btn-create');
+        const btnJoin = document.getElementById('btn-join');
+        const btnToggleMic = document.getElementById('btn-toggle-mic');
+        const btnToggleCam = document.getElementById('btn-toggle-cam');
+        const btnShareScreen = document.getElementById('btn-share-screen');
+        const btnPip = document.getElementById('btn-pip');
+        const btnToggleChat = document.getElementById('btn-toggle-chat');
+        const btnCloseChat = document.getElementById('btn-close-chat');
+        const btnLeave = document.getElementById('btn-leave');
+        const btnCopyCode = document.getElementById('btn-copy-code');
+        const btnSendMsg = document.getElementById('btn-send-msg');
+
+        // ==========================================
+        // 3. UI HELPERS & TOASTS
+        // ==========================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'fa-circle-info';
+            if(type === 'success') icon = 'fa-check-circle';
+            if(type === 'error') icon = 'fa-exclamation-circle';
+
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            // Remove after animation (3.4s)
+            setTimeout(() => {
+                if(container.contains(toast)) container.removeChild(toast);
+            }, 3400);
+        }
+
+        function switchView(toCall) {
+            if (toCall) {
+                landingView.style.opacity = '0';
+                setTimeout(() => {
+                    landingView.style.display = 'none';
+                    callView.style.display = 'flex';
+                    // Trigger reflow
+                    void callView.offsetWidth;
+                    callView.style.opacity = '1';
+                }, 500);
+            } else {
+                callView.style.opacity = '0';
+                setTimeout(() => {
+                    callView.style.display = 'none';
+                    landingView.style.display = 'block';
+                    void landingView.offsetWidth;
+                    landingView.style.opacity = '1';
+                }, 500);
+            }
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function startTimer() {
+            secondsElapsed = 0;
+            document.getElementById('call-timer').innerText = "00:00";
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                document.getElementById('call-timer').innerText = formatTime(secondsElapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('call-timer').innerText = "00:00";
+        }
+
+        // ==========================================
+        // 4. MEDIA STREAM INITIALIZATION
+        // ==========================================
+        async function getLocalMedia() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+                    audio: true
+                });
+                localVideo.srcObject = localStream;
+                return true;
+            } catch (error) {
+                console.error("Error accessing media devices.", error);
+                showToast("Camera/Microphone access denied or unavailable.", "error");
+                return false;
+            }
+        }
+
+        // ==========================================
+        // 5. WEBRTC SIGNALING (FIRESTORE)
+        // ==========================================
+        
+        // Initialize PeerConnection and add tracks
+        function initPeerConnection() {
+            peerConnection = new RTCPeerConnection(rtcConfiguration);
+
+            remoteStream = new MediaStream();
+            remoteVideo.srcObject = remoteStream;
+
+            // Add local tracks to PC
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            // Listen for remote tracks
+            peerConnection.ontrack = event => {
+                event.streams[0].getTracks().forEach(track => {
+                    remoteStream.addTrack(track);
+                });
+                // Hide waiting overlay when we get remote video
+                waitingOverlay.style.display = 'none';
+                startTimer();
+                showToast("Peer connected!", "success");
+            };
+
+            // Connection state changes
+            peerConnection.onconnectionstatechange = () => {
+                if(peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+                    showToast("User disconnected.", "error");
+                    hangUp();
+                }
+            };
+        }
+
+        // Setup Data Channel for Chat
+        function setupDataChannel(isCaller) {
+            if (isCaller) {
+                dataChannel = peerConnection.createDataChannel("chat-channel");
+                dataChannel.onmessage = handleReceiveMessage;
+                dataChannel.onopen = () => console.log("Data channel opened");
+            } else {
+                peerConnection.ondatachannel = (event) => {
+                    dataChannel = event.channel;
+                    dataChannel.onmessage = handleReceiveMessage;
+                    dataChannel.onopen = () => console.log("Data channel opened");
+                };
+            }
+        }
+
+        // CREATE A CALL (Caller)
+        async function createCall() {
+            if (!await getLocalMedia()) return;
+            switchView(true);
+            
+            initPeerConnection();
+            setupDataChannel(true);
+
+            // Reference to Firestore collections
+            const callDoc = doc(collection(db, "calls"));
+            roomId = callDoc.id;
+            displayRoomId.innerText = roomId;
+
+            const offerCandidates = collection(callDoc, "offerCandidates");
+            const answerCandidates = collection(callDoc, "answerCandidates");
+
+            // Get ICE candidates and save to Firestore
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    addDoc(offerCandidates, event.candidate.toJSON());
+                }
+            };
+
+            // Create Offer
+            const offerDescription = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offerDescription);
+
+            const offer = {
+                sdp: offerDescription.sdp,
+                type: offerDescription.type,
+            };
+
+            await setDoc(callDoc, { offer });
+            showToast("Call code generated! Share it to connect.", "success");
+
+            // Listen for remote Answer
+            onSnapshot(callDoc, (snapshot) => {
+                const data = snapshot.data();
+                if (!peerConnection.currentRemoteDescription && data?.answer) {
+                    const answerDescription = new RTCSessionDescription(data.answer);
+                    peerConnection.setRemoteDescription(answerDescription);
+                }
+            });
+
+            // Listen for remote ICE candidates
+            onSnapshot(answerCandidates, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const candidate = new RTCIceCandidate(change.doc.data());
+                        peerConnection.addIceCandidate(candidate);
+                    }
+                });
+            });
+        }
+
+        // JOIN A CALL (Callee)
+        async function joinCall() {
+            const inputCode = callCodeInput.value.trim();
+            if (!inputCode) {
+                showToast("Please enter a valid call code.", "error");
+                return;
+            }
+
+            const callDoc = doc(db, "calls", inputCode);
+            const callSnapshot = await getDoc(callDoc);
+            
+            if (!callSnapshot.exists()) {
+                showToast("Call code not found.", "error");
+                return;
+            }
+
+            if (!await getLocalMedia()) return;
+            
+            roomId = inputCode;
+            displayRoomId.innerText = roomId;
+            switchView(true);
+
+            initPeerConnection();
+            setupDataChannel(false);
+
+            const offerCandidates = collection(callDoc, "offerCandidates");
+            const answerCandidates = collection(callDoc, "answerCandidates");
+
+            // Save ICE Candidates
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    addDoc(answerCandidates, event.candidate.toJSON());
+                }
+            };
+
+            // Get Offer from Firestore
+            const callData = callSnapshot.data();
+            const offerDescription = callData.offer;
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
+
+            // Create Answer
+            const answerDescription = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answerDescription);
+
+            const answer = {
+                type: answerDescription.type,
+                sdp: answerDescription.sdp,
+            };
+
+            await updateDoc(callDoc, { answer });
+            waitingOverlay.style.display = 'none'; // Callee doesn't wait
+
+            // Listen for caller ICE candidates
+            onSnapshot(offerCandidates, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const candidate = new RTCIceCandidate(change.doc.data());
+                        peerConnection.addIceCandidate(candidate);
+                    }
+                });
+            });
+        }
+
+        // HANG UP & CLEANUP
+        function hangUp() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            if (remoteStream) {
+                remoteStream.getTracks().forEach(track => track.stop());
+                remoteStream = null;
+            }
+            
+            stopTimer();
+            waitingOverlay.style.display = 'block';
+            chatMessages.innerHTML = ''; // Clear chat
+            
+            // Reset buttons
+            btnToggleMic.classList.remove('active-danger');
+            btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+            btnToggleCam.classList.remove('active-danger');
+            btnToggleCam.innerHTML = '<i class="fa-solid fa-video"></i>';
+            btnShareScreen.classList.remove('active-primary');
+            
+            // Hide Sidebar
+            chatSidebar.classList.remove('open');
+            videoContainer.style.width = '100%';
+
+            switchView(false);
+            showToast("You left the call.", "info");
+        }
+
+        // ==========================================
+        // 6. CONTROL BAR LOGIC (Mic, Cam, Screen)
+        // ==========================================
+        
+        // Toggle Mic
+        btnToggleMic.addEventListener('click', () => {
+            if (!localStream) return;
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack.enabled) {
+                audioTrack.enabled = false;
+                btnToggleMic.classList.add('active-danger');
+                btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
+                showToast("Microphone muted", "info");
+            } else {
+                audioTrack.enabled = true;
+                btnToggleMic.classList.remove('active-danger');
+                btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                showToast("Microphone unmuted", "info");
+            }
+        });
+
+        // Toggle Camera
+        btnToggleCam.addEventListener('click', () => {
+            if (!localStream) return;
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack.enabled) {
+                videoTrack.enabled = false;
+                btnToggleCam.classList.add('active-danger');
+                btnToggleCam.innerHTML = '<i class="fa-solid fa-video-slash"></i>';
+                showToast("Camera turned off", "info");
+            } else {
+                videoTrack.enabled = true;
+                btnToggleCam.classList.remove('active-danger');
+                btnToggleCam.innerHTML = '<i class="fa-solid fa-video"></i>';
+                showToast("Camera turned on", "info");
+            }
+        });
+
+        // Screen Share
+        let screenStream = null;
+        btnShareScreen.addEventListener('click', async () => {
+            if (!screenStream) {
+                try {
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    const screenTrack = screenStream.getVideoTracks()[0];
+                    
+                    // Replace video track in peer connection
+                    const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
+                    sender.replaceTrack(screenTrack);
+                    localVideo.srcObject = screenStream;
+                    
+                    btnShareScreen.classList.add('active-primary');
+                    showToast("Screen sharing started", "success");
+
+                    // Listen for user stopping screen share via browser UI
+                    screenTrack.onended = () => stopScreenShare();
+                } catch (error) {
+                    console.error("Error sharing screen", error);
+                    showToast("Could not share screen", "error");
+                }
+            } else {
+                stopScreenShare();
+            }
+        });
+
+        function stopScreenShare() {
+            if(!screenStream) return;
+            screenStream.getTracks().forEach(track => track.stop());
+            screenStream = null;
+            
+            // Revert to camera
+            const videoTrack = localStream.getVideoTracks()[0];
+            const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+            if(sender && videoTrack) sender.replaceTrack(videoTrack);
+            
+            localVideo.srcObject = localStream;
+            btnShareScreen.classList.remove('active-primary');
+            showToast("Screen sharing stopped", "info");
+        }
+
+        // Picture-in-Picture
+        btnPip.addEventListener('click', async () => {
+            if (document.pictureInPictureElement) {
+                document.exitPictureInPicture();
+            } else if (document.pictureInPictureEnabled && remoteVideo.readyState === 4) {
+                try {
+                    await remoteVideo.requestPictureInPicture();
+                } catch (error) {
+                    showToast("PiP not supported or failed", "error");
+                }
+            }
+        });
+
+        // ==========================================
+        // 7. CHAT SYSTEM LOGIC
+        // ==========================================
+        
+        function toggleChat() {
+            const isOpen = chatSidebar.classList.contains('open');
+            if (isOpen) {
+                chatSidebar.classList.remove('open');
+                // Adjust video container margin if needed (using overlay for now so no layout shift)
+            } else {
+                chatSidebar.classList.add('open');
+            }
+        }
+
+        btnToggleChat.addEventListener('click', toggleChat);
+        btnCloseChat.addEventListener('click', toggleChat);
+
+        function appendMessage(text, isSelf) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message');
+            msgDiv.classList.add(isSelf ? 'self' : 'remote');
+            
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            msgDiv.innerHTML = `
+                ${text}
+                <span class="msg-time">${timeStr}</span>
+            `;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+        }
+
+        function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text || !dataChannel || dataChannel.readyState !== 'open') {
+                if(text && (!dataChannel || dataChannel.readyState !== 'open')) {
+                    showToast("Chat not connected yet", "error");
+                }
+                return;
+            }
+            
+            // Send via WebRTC DataChannel
+            dataChannel.send(text);
+            appendMessage(text, true);
+            chatInput.value = '';
+        }
+
+        function handleReceiveMessage(event) {
+            appendMessage(event.data, false);
+            // Auto open chat if hidden
+            if(!chatSidebar.classList.contains('open')) {
+                showToast("New message received!", "info");
+            }
+        }
+
+        btnSendMsg.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // ==========================================
+        // 8. MISC EVENT LISTENERS
+        // ==========================================
+        
+        btnCreate.addEventListener('click', createCall);
+        btnJoin.addEventListener('click', joinCall);
+        btnLeave.addEventListener('click', hangUp);
+
+        btnCopyCode.addEventListener('click', () => {
+            if (roomId) {
+                navigator.clipboard.writeText(roomId);
+                showToast("Code copied to clipboard!", "success");
+            }
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Only if we are in a call and not typing in chat
+            if(callView.style.display === 'flex' && document.activeElement !== chatInput) {
+                if (e.key.toLowerCase() === 'm') btnToggleMic.click();
+                if (e.key.toLowerCase() === 'v') btnToggleCam.click();
+            }
+        });
+
+        // ==========================================
+        // 9. BACKGROUND PARTICLE ANIMATION LOGIC
+        // ==========================================
+        
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const particleCount = 80;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = Math.random() * 2 + 1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(108, 92, 231, 0.5)';
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw particles and connect them
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(0, 206, 201, ${1 - dist / 120})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+    </script>
+</body>
+</html>
