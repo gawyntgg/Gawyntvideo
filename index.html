@@ -1021,129 +1021,139 @@
 
         // CREATE A CALL (Caller)
         async function createCall() {
-            if (!await getLocalMedia()) return;
-            switchView(true);
-            
-            initPeerConnection();
-            setupDataChannel(true);
+            try {
+                if (!await getLocalMedia()) return;
+                switchView(true);
+                
+                initPeerConnection();
+                setupDataChannel(true);
 
-            // Generate a random 6-digit number to act as the room ID
-            roomId = Math.floor(100000 + Math.random() * 900000).toString();
-            
-            // Reference to Firestore collections using the short ID
-            const callDoc = doc(db, "calls", roomId);
-            displayRoomId.innerText = roomId;
+                // Generate a random 6-digit number to act as the room ID
+                roomId = Math.floor(100000 + Math.random() * 900000).toString();
+                
+                // Reference to Firestore collections using the short ID
+                const callDoc = doc(db, "calls", roomId);
+                displayRoomId.innerText = roomId;
 
-            const offerCandidates = collection(callDoc, "offerCandidates");
-            const answerCandidates = collection(callDoc, "answerCandidates");
+                const offerCandidates = collection(callDoc, "offerCandidates");
+                const answerCandidates = collection(callDoc, "answerCandidates");
 
-            // Get ICE candidates and save to Firestore
-            peerConnection.onicecandidate = event => {
-                if (event.candidate) {
-                    addDoc(offerCandidates, event.candidate.toJSON());
-                }
-            };
+                // Get ICE candidates and save to Firestore
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        addDoc(offerCandidates, event.candidate.toJSON());
+                    }
+                };
 
-            // Create Offer
-            const offerDescription = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offerDescription);
+                // Create Offer
+                const offerDescription = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offerDescription);
 
-            const offer = {
-                sdp: offerDescription.sdp,
-                type: offerDescription.type,
-            };
+                const offer = {
+                    sdp: offerDescription.sdp,
+                    type: offerDescription.type,
+                };
 
-            await setDoc(callDoc, { offer });
-            showToast("Call code generated! Share it to connect.", "success");
+                await setDoc(callDoc, { offer });
+                showToast("Call code generated! Share it to connect.", "success");
 
-            // Listen for remote Answer
-            onSnapshot(callDoc, (snapshot) => {
-                const data = snapshot.data();
-                if (!peerConnection.currentRemoteDescription && data?.answer) {
-                    const answerDescription = new RTCSessionDescription(data.answer);
-                    peerConnection.setRemoteDescription(answerDescription);
-                }
-            });
-
-            // Listen for remote ICE candidates
-            onSnapshot(answerCandidates, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const candidate = new RTCIceCandidate(change.doc.data());
-                        peerConnection.addIceCandidate(candidate);
+                // Listen for remote Answer
+                onSnapshot(callDoc, (snapshot) => {
+                    const data = snapshot.data();
+                    if (!peerConnection.currentRemoteDescription && data?.answer) {
+                        const answerDescription = new RTCSessionDescription(data.answer);
+                        peerConnection.setRemoteDescription(answerDescription);
                     }
                 });
-            });
+
+                // Listen for remote ICE candidates
+                onSnapshot(answerCandidates, (snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added") {
+                            const candidate = new RTCIceCandidate(change.doc.data());
+                            peerConnection.addIceCandidate(candidate);
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error("Error creating call:", error);
+                showToast("Failed to create call. Check console.", "error");
+            }
         }
 
         // JOIN A CALL (Callee)
         async function joinCall() {
-            // Strip any accidental spaces out of the entered text
-            const inputCode = callCodeInput.value.trim();
-            if (!inputCode) {
-                showToast("Please enter a valid call code.", "error");
-                return;
-            }
-
-            const callDoc = doc(db, "calls", inputCode);
-            const callSnapshot = await getDoc(callDoc);
-            
-            if (!callSnapshot.exists()) {
-                showToast("Call code not found. Please check and try again.", "error");
-                return;
-            }
-            
-            // Check to ensure data is present to prevent crashes
-            const callData = callSnapshot.data();
-            if (!callData || !callData.offer) {
-                showToast("Call is no longer valid or incomplete.", "error");
-                return;
-            }
-
-            if (!await getLocalMedia()) return;
-            
-            roomId = inputCode;
-            displayRoomId.innerText = roomId;
-            switchView(true);
-
-            initPeerConnection();
-            setupDataChannel(false);
-
-            const offerCandidates = collection(callDoc, "offerCandidates");
-            const answerCandidates = collection(callDoc, "answerCandidates");
-
-            // Save ICE Candidates
-            peerConnection.onicecandidate = event => {
-                if (event.candidate) {
-                    addDoc(answerCandidates, event.candidate.toJSON());
+            try {
+                // Strip any accidental spaces out of the entered text
+                const inputCode = callCodeInput.value.trim();
+                if (!inputCode) {
+                    showToast("Please enter a valid call code.", "error");
+                    return;
                 }
-            };
 
-            // Get Offer from Firestore
-            const offerDescription = callData.offer;
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
+                const callDoc = doc(db, "calls", inputCode);
+                const callSnapshot = await getDoc(callDoc);
+                
+                if (!callSnapshot.exists()) {
+                    showToast("Call code not found. Please check and try again.", "error");
+                    return;
+                }
+                
+                // Check to ensure data is present to prevent crashes
+                const callData = callSnapshot.data();
+                if (!callData || !callData.offer) {
+                    showToast("Call is no longer valid or incomplete.", "error");
+                    return;
+                }
 
-            // Create Answer
-            const answerDescription = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answerDescription);
+                if (!await getLocalMedia()) return;
+                
+                roomId = inputCode;
+                displayRoomId.innerText = roomId;
+                switchView(true);
 
-            const answer = {
-                type: answerDescription.type,
-                sdp: answerDescription.sdp,
-            };
+                initPeerConnection();
+                setupDataChannel(false);
 
-            await updateDoc(callDoc, { answer });
-            waitingOverlay.style.display = 'none'; // Callee doesn't wait
+                const offerCandidates = collection(callDoc, "offerCandidates");
+                const answerCandidates = collection(callDoc, "answerCandidates");
 
-            // Listen for caller ICE candidates
-            onSnapshot(offerCandidates, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const candidate = new RTCIceCandidate(change.doc.data());
-                        peerConnection.addIceCandidate(candidate);
+                // Save ICE Candidates
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        addDoc(answerCandidates, event.candidate.toJSON());
                     }
+                };
+
+                // Get Offer from Firestore
+                const offerDescription = callData.offer;
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
+
+                // Create Answer
+                const answerDescription = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answerDescription);
+
+                const answer = {
+                    type: answerDescription.type,
+                    sdp: answerDescription.sdp,
+                };
+
+                await updateDoc(callDoc, { answer });
+                waitingOverlay.style.display = 'none'; // Callee doesn't wait
+
+                // Listen for caller ICE candidates
+                onSnapshot(offerCandidates, (snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added") {
+                            const candidate = new RTCIceCandidate(change.doc.data());
+                            peerConnection.addIceCandidate(candidate);
+                        }
+                    });
                 });
-            });
+            } catch (error) {
+                console.error("Error joining call:", error);
+                showToast("Error joining call. Check console/permissions.", "error");
+            }
         }
 
         // HANG UP & CLEANUP
@@ -1447,6 +1457,11 @@
                 if (e.key.toLowerCase() === 'm') btnToggleMic.click();
                 if (e.key.toLowerCase() === 'v') btnToggleCam.click();
             }
+        });
+
+        // ADDED: Listens for Enter key press on the call code input specifically
+        callCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinCall();
         });
 
         // ==========================================
