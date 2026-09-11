@@ -386,7 +386,7 @@
         .btn-leave:hover { background: #d63031; }
 
         /* =========================================
-           CHAT SIDEBAR
+           CHAT SIDEBAR & MEME PICKER
            ========================================= */
         #chat-sidebar {
             width: var(--panel-width);
@@ -481,12 +481,20 @@
             opacity: 0.7;
             text-align: right;
         }
+        
+        .chat-meme-img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 5px;
+            display: block;
+        }
 
         .chat-input-area {
             padding: 20px;
             border-top: 1px solid var(--glass-border);
             display: flex;
             gap: 10px;
+            position: relative;
         }
 
         .chat-input-area input {
@@ -497,6 +505,7 @@
             border-radius: 20px;
             color: white;
             outline: none;
+            width: 100%;
         }
         .chat-input-area input:focus { border-color: var(--primary); }
 
@@ -505,9 +514,77 @@
             height: 40px;
             border-radius: 50%;
             padding: 0;
-            background: var(--primary);
             flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+        
+        #btn-send-msg { background: var(--primary); }
+
+        /* Meme Picker Styles */
+        #meme-picker {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            width: 100%;
+            height: 300px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+            display: none;
+            flex-direction: column;
+            z-index: 30;
+            border-top-left-radius: 20px;
+        }
+        
+        #meme-picker.open { display: flex; }
+        
+        .meme-picker-header {
+            padding: 10px 15px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        #meme-grid {
+            flex: 1;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        #meme-grid::-webkit-scrollbar { width: 6px; }
+        #meme-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        
+        .meme-item {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .meme-item:hover { transform: scale(1.05); }
+        
+        .btn-load-more {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .btn-load-more:hover { background: rgba(255,255,255,0.2); }
 
         /* =========================================
            TOAST NOTIFICATIONS
@@ -652,7 +729,21 @@
                         End-to-end encrypted chat via WebRTC
                     </div>
                 </div>
+                
+                <!-- Meme Picker Overlay -->
+                <div id="meme-picker">
+                    <div class="meme-picker-header">
+                        <span>Select a Meme</span>
+                        <button id="btn-close-meme" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div id="meme-grid"></div>
+                    <button class="btn-load-more" id="btn-load-memes">Load More Memes</button>
+                </div>
+
                 <div class="chat-input-area">
+                    <button id="btn-toggle-meme" class="btn-secondary" title="Send Meme">
+                        <i class="fa-solid fa-face-grin-tears"></i>
+                    </button>
                     <input type="text" id="chat-input" placeholder="Type a message...">
                     <button id="btn-send-msg" class="btn-primary">
                         <i class="fa-solid fa-paper-plane"></i>
@@ -723,6 +814,13 @@
         const videoContainer = document.getElementById('video-container');
         const chatMessages = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
+        
+        // Meme Elements
+        const memePicker = document.getElementById('meme-picker');
+        const memeGrid = document.getElementById('meme-grid');
+        const btnToggleMeme = document.getElementById('btn-toggle-meme');
+        const btnCloseMeme = document.getElementById('btn-close-meme');
+        const btnLoadMemes = document.getElementById('btn-load-memes');
 
         // Buttons
         const btnCreate = document.getElementById('btn-create');
@@ -1013,8 +1111,9 @@
             btnToggleCam.innerHTML = '<i class="fa-solid fa-video"></i>';
             btnShareScreen.classList.remove('active-primary');
             
-            // Hide Sidebar
+            // Hide Sidebar & Meme Picker
             chatSidebar.classList.remove('open');
+            memePicker.classList.remove('open');
             videoContainer.style.width = '100%';
 
             switchView(false);
@@ -1115,14 +1214,14 @@
         });
 
         // ==========================================
-        // 7. CHAT SYSTEM LOGIC
+        // 7. CHAT & MEME SYSTEM LOGIC
         // ==========================================
         
         function toggleChat() {
             const isOpen = chatSidebar.classList.contains('open');
             if (isOpen) {
                 chatSidebar.classList.remove('open');
-                // Adjust video container margin if needed (using overlay for now so no layout shift)
+                memePicker.classList.remove('open');
             } else {
                 chatSidebar.classList.add('open');
             }
@@ -1131,6 +1230,55 @@
         btnToggleChat.addEventListener('click', toggleChat);
         btnCloseChat.addEventListener('click', toggleChat);
 
+        // --- MEME API LOGIC ---
+        btnToggleMeme.addEventListener('click', () => {
+            memePicker.classList.toggle('open');
+            if (memePicker.classList.contains('open') && memeGrid.children.length === 0) {
+                fetchMemes();
+            }
+        });
+
+        btnCloseMeme.addEventListener('click', () => memePicker.classList.remove('open'));
+        btnLoadMemes.addEventListener('click', fetchMemes);
+
+        async function fetchMemes() {
+            const originalText = btnLoadMemes.innerText;
+            btnLoadMemes.innerText = "Loading Memes...";
+            try {
+                // Fetching 20 random memes at a time from a public Meme API
+                const response = await fetch('https://meme-api.com/gimme/20');
+                const data = await response.json();
+                
+                data.memes.forEach(meme => {
+                    const img = document.createElement('img');
+                    img.src = meme.url;
+                    img.className = 'meme-item';
+                    img.loading = "lazy";
+                    img.title = meme.title;
+                    img.onclick = () => {
+                        sendMeme(meme.url);
+                        memePicker.classList.remove('open');
+                    };
+                    memeGrid.appendChild(img);
+                });
+            } catch (error) {
+                console.error("Error loading memes:", error);
+                showToast("Failed to load memes", "error");
+            }
+            btnLoadMemes.innerText = originalText;
+        }
+
+        function sendMeme(url) {
+            if (!dataChannel || dataChannel.readyState !== 'open') {
+                showToast("Chat not connected yet", "error");
+                return;
+            }
+            const payload = `[MEME]${url}`;
+            dataChannel.send(payload);
+            appendMessage(payload, true);
+        }
+        // ----------------------
+
         function appendMessage(text, isSelf) {
             const msgDiv = document.createElement('div');
             msgDiv.classList.add('message');
@@ -1138,8 +1286,19 @@
             
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
+            let contentHTML = text;
+            
+            // Check if the incoming message is a meme
+            if (typeof text === 'string' && text.startsWith('[MEME]')) {
+                const url = text.replace('[MEME]', '');
+                contentHTML = `<img src="${url}" class="chat-meme-img" alt="Sent Meme">`;
+            } else {
+                // Sanitize normal text to prevent XSS
+                contentHTML = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            }
+            
             msgDiv.innerHTML = `
-                ${text}
+                ${contentHTML}
                 <span class="msg-time">${timeStr}</span>
             `;
             chatMessages.appendChild(msgDiv);
