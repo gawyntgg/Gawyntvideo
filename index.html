@@ -1027,6 +1027,7 @@
         // CREATE A CALL (Caller)
         async function createCall() {
             try {
+                // FIX: Request camera and microphone permissions BEFORE joining or generating codes
                 if (!await getLocalMedia()) return;
                 switchView(true);
                 
@@ -1122,6 +1123,7 @@
                     return;
                 }
 
+                // FIX: Request camera and microphone permissions BEFORE joining the call
                 if (!await getLocalMedia()) return;
                 
                 roomId = inputCode;
