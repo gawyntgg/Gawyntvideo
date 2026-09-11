@@ -809,6 +809,11 @@
          ========================================= -->
     <!-- Using ES Modules for Firebase Modular SDK -->
     <script type="module">
+        // FIX: Check if running via local file protocol which blocks modules and camera permissions
+        if (window.location.protocol === 'file:') {
+            alert("⚠️ WARNING: WebRTC and Firebase ES Modules require a web server to work properly.\n\nOpening this file via 'file://' will cause permission errors and CORS blocks. Please host it using a local server (like Live Server in VS Code) or deploy it to a web host.");
+        }
+
         // Import Firebase SDKs (using official CDN for modular v10)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -963,7 +968,7 @@
                 return true;
             } catch (error) {
                 console.error("Error accessing media devices.", error);
-                showToast("Camera/Microphone access denied or unavailable.", "error");
+                showToast("Camera/Microphone access denied. Check browser permissions and ensure you are on HTTPS/Localhost.", "error");
                 return false;
             }
         }
@@ -1041,7 +1046,10 @@
                 // Get ICE candidates and save to Firestore
                 peerConnection.onicecandidate = event => {
                     if (event.candidate) {
-                        addDoc(offerCandidates, event.candidate.toJSON());
+                        // FIX: Remove undefined fields that cause Firestore to crash
+                        const candidateObj = event.candidate.toJSON();
+                        Object.keys(candidateObj).forEach(key => candidateObj[key] === undefined && delete candidateObj[key]);
+                        addDoc(offerCandidates, candidateObj);
                     }
                 };
 
@@ -1077,7 +1085,15 @@
                 });
             } catch (error) {
                 console.error("Error creating call:", error);
-                showToast("Failed to create call. Check console.", "error");
+                
+                // FIX: Specific intercept for Firebase permissions errors
+                if (error.code === 'permission-denied') {
+                    showToast("Firebase Permission Denied! See alert for fix.", "error");
+                    alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste the following:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}\n\nNote: For production, you should secure these later.");
+                } else {
+                    showToast("Failed to create call. Check console.", "error");
+                }
+                hangUp();
             }
         }
 
@@ -1121,7 +1137,10 @@
                 // Save ICE Candidates
                 peerConnection.onicecandidate = event => {
                     if (event.candidate) {
-                        addDoc(answerCandidates, event.candidate.toJSON());
+                        // FIX: Remove undefined fields that cause Firestore to crash
+                        const candidateObj = event.candidate.toJSON();
+                        Object.keys(candidateObj).forEach(key => candidateObj[key] === undefined && delete candidateObj[key]);
+                        addDoc(answerCandidates, candidateObj);
                     }
                 };
 
@@ -1152,7 +1171,15 @@
                 });
             } catch (error) {
                 console.error("Error joining call:", error);
-                showToast("Error joining call. Check console/permissions.", "error");
+                
+                // FIX: Specific intercept for Firebase permissions errors
+                if (error.code === 'permission-denied') {
+                    showToast("Firebase Permission Denied! See alert for fix.", "error");
+                    alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste the following:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}\n\nNote: For production, you should secure these later.");
+                } else {
+                    showToast("Error joining call. Check console/permissions.", "error");
+                }
+                hangUp();
             }
         }
 
