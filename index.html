@@ -1,1604 +1,782 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gawynt Video</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        /* =========================================
-           CSS VARIABLES & RESET
-           ========================================= */
-        :root {
-            --primary: #6c5ce7;
-            --primary-hover: #5b4bc4;
-            --secondary: #00cec9;
-            --bg-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-light: #f8fafc;
-            --danger: #ff7675;
-            --success: #00b894;
-            --panel-width: 350px;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Gawynt Video — Face-to-face, wherever you are</title>
+<meta name="description" content="Gawynt Video — instant, code-based video calls. No accounts, no downloads." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%230E141F'/%3E%3Cpath d='M20 55c10-18 20-26 30-26s20 8 30 26' stroke='%234FD8C4' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3Cpath d='M28 68c8-13 15-19 22-19s14 6 22 19' stroke='%23F2A65A' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+/* ==========================================================================
+   GAWYNT VIDEO — design tokens
+   Concept: "gwynt" is Welsh for wind — a call is a signal that travels
+   through open air to reach someone. The palette is a dusk sky; the accent
+   is the signal itself. Camera preview is the hero on the lobby screen,
+   because in a video call app your own face IS the opening moment.
+   ========================================================================== */
+:root{
+  --ink:#0E141F;
+  --ink-soft:#131A28;
+  --surface:#182034;
+  --surface-2:#1F293F;
+  --surface-3:#28324A;
+  --line:#2C3852;
+  --line-soft:#212B42;
+  --text:#EAF0FA;
+  --text-dim:#95A0BC;
+  --text-faint:#5E6A88;
+  --signal:#4FD8C4;
+  --signal-ink:#08211D;
+  --signal-dim:rgba(79,216,196,.14);
+  --warm:#F2A65A;
+  --warm-ink:#2B1A08;
+  --warm-dim:rgba(242,166,90,.16);
+  --danger:#E8636B;
+  --danger-dim:rgba(232,99,107,.16);
+  --good:#6BCB88;
+  --radius-lg:26px;
+  --radius-md:16px;
+  --radius-sm:10px;
+  --shadow-soft:0 24px 70px -24px rgba(3,6,14,.75);
+  --shadow-pop:0 10px 30px -10px rgba(3,6,14,.6);
+  --ease:cubic-bezier(.22,.9,.32,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --font-display:'Fraunces',Georgia,serif;
+  --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  --bar:64px;
+  --sb:48px;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --ink:#F3F1EC;
+  --ink-soft:#EAE7DF;
+  --surface:#FFFFFF;
+  --surface-2:#F4F2EC;
+  --surface-3:#E9E6DC;
+  --line:#DEDACE;
+  --line-soft:#E7E3D8;
+  --text:#191712;
+  --text-dim:#6B6558;
+  --text-faint:#9A9384;
+  --signal:#1E9E8B;
+  --signal-ink:#EAFBF7;
+  --signal-dim:rgba(30,158,139,.12);
+  --warm:#C97A2E;
+  --warm-ink:#FFF6EC;
+  --warm-dim:rgba(201,122,46,.14);
+  --danger:#C93F47;
+  --danger-dim:rgba(201,63,71,.12);
+  --shadow-soft:0 24px 70px -28px rgba(30,25,10,.35);
+  --shadow-pop:0 10px 26px -12px rgba(30,25,10,.28);
+  color-scheme:light;
+}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
+*,*::before,*::after{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--text);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  transition:background .4s var(--ease),color .4s var(--ease);
+}
+h1,h2,h3{font-family:var(--font-display);font-weight:500;margin:0;letter-spacing:-.01em;}
+p{margin:0;}
+button{font-family:inherit;color:inherit;}
+input{font-family:inherit;color:inherit;}
+::selection{background:var(--signal-dim);color:var(--text);}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
+.hidden{display:none !important;}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:6px;}
+svg{display:block;}
 
-        body, html {
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            overflow: hidden;
-        }
+/* ==========================================================================
+   Screens
+   ========================================================================== */
+#app{position:relative;width:100vw;height:100vh;height:100dvh;}
+.screen{position:absolute;inset:0;opacity:1;}
+.screen.hidden{display:none;}
 
-        /* =========================================
-           BACKGROUND ANIMATION CANVAS
-           ========================================= */
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 0;
-            pointer-events: none;
-        }
+/* ==========================================================================
+   Lobby
+   ========================================================================== */
+#lobby-screen{
+  display:flex;flex-direction:column;
+  padding:28px clamp(20px,4vw,56px);
+  background:
+    radial-gradient(1100px 620px at 82% -10%, var(--signal-dim), transparent 60%),
+    radial-gradient(900px 700px at -10% 110%, var(--warm-dim), transparent 55%),
+    var(--ink);
+}
+.lobby-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:clamp(16px,3vh,40px);}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-mark{width:30px;height:30px;flex:none;}
+.brand-name{font-family:var(--font-display);font-size:20px;font-weight:500;letter-spacing:-.01em;}
+.icon-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:var(--radius-sm);
+  border:1px solid var(--line);background:var(--surface);
+  cursor:pointer;transition:transform .15s var(--ease),background .2s var(--ease),border-color .2s var(--ease);
+}
+.icon-btn:hover{border-color:var(--text-faint);}
+.icon-btn:active{transform:scale(.92);}
+.icon-btn svg{width:18px;height:18px;stroke:var(--text-dim);}
 
-        /* =========================================
-           APP CONTAINER & GLASSMORPHISM
-           ========================================= */
-        #app {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+.lobby-main{
+  flex:1;min-height:0;
+  display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,420px);
+  gap:clamp(16px,2.4vw,32px);
+  align-items:stretch;
+}
+.lobby-hero{
+  position:relative;border-radius:var(--radius-lg);overflow:hidden;
+  background:linear-gradient(160deg,var(--surface),var(--ink-soft));
+  border:1px solid var(--line-soft);
+  min-height:0;
+  animation:heroIn .7s var(--ease) both;
+}
+@keyframes heroIn{from{opacity:0;transform:scale(.97) translateY(6px);}to{opacity:1;transform:none;}}
+#lobby-video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+.lobby-hero.cam-off #lobby-video{visibility:hidden;}
+.avatar-fallback{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 40%, var(--surface-3), var(--ink-soft));
+}
+.avatar-fallback.show{display:flex;}
+.avatar-circle{
+  width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:34px;font-weight:500;color:#0E141F;
+  box-shadow:var(--shadow-pop);
+}
+.lobby-hero .avatar-circle{width:120px;height:120px;font-size:42px;}
+.lobby-hero-top{position:absolute;top:16px;left:16px;display:flex;gap:8px;}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;
+  background:rgba(14,20,31,.55);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.08);
+  font-size:12.5px;color:var(--text-dim);
+}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--good);}
+.lobby-hero-controls{
+  position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
+  display:flex;gap:10px;
+}
+.mini-toggle{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(20,27,41,.6);backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.08);
+  cursor:pointer;transition:all .18s var(--ease-spring);
+}
+.mini-toggle svg{width:20px;height:20px;stroke:var(--text);}
+.mini-toggle:hover{transform:translateY(-2px);}
+.mini-toggle:active{transform:scale(.9);}
+.mini-toggle.off{background:var(--danger);border-color:var(--danger);}
+.mini-toggle.off svg{stroke:#fff;}
+.lobby-hint{
+  position:absolute;right:16px;bottom:22px;max-width:180px;
+  font-size:12px;color:var(--text-dim);text-align:right;line-height:1.4;
+}
 
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-        }
+.lobby-panel{
+  border-radius:var(--radius-lg);
+  background:var(--surface);border:1px solid var(--line-soft);
+  padding:clamp(20px,3vw,34px);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  animation:panelIn .7s .08s var(--ease) both;
+}
+@keyframes panelIn{from{opacity:0;transform:translateX(8px);}to{opacity:1;transform:none;}}
+.lobby-panel h1{font-size:clamp(22px,2.6vw,28px);margin-bottom:6px;}
+.lobby-sub{color:var(--text-dim);font-size:14px;line-height:1.5;margin-bottom:24px;}
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:16px;}
+.field label{font-size:12.5px;color:var(--text-dim);font-weight:500;}
+.field input{
+  height:46px;border-radius:var(--radius-sm);border:1px solid var(--line);
+  background:var(--surface-2);color:var(--text);padding:0 14px;font-size:15px;
+  transition:border-color .18s var(--ease),background .18s var(--ease);
+}
+.field input:focus{border-color:var(--signal);background:var(--ink-soft);}
+.field input::placeholder{color:var(--text-faint);}
+#join-code-input{font-family:var(--font-mono);letter-spacing:.02em;text-transform:lowercase;}
 
-        /* =========================================
-           LANDING VIEW (CREATE / JOIN)
-           ========================================= */
-        #landing-view {
-            width: 90%;
-            max-width: 500px;
-            padding: 40px;
-            text-align: center;
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
+.btn{
+  height:48px;border-radius:var(--radius-sm);border:none;cursor:pointer;
+  font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .15s var(--ease-spring),filter .18s var(--ease),background .2s var(--ease);
+  position:relative;overflow:hidden;
+}
+.btn svg{width:17px;height:17px;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--warm);color:var(--warm-ink);}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-secondary{background:var(--surface-3);color:var(--text);border:1px solid var(--line);}
+.btn-secondary:hover{border-color:var(--text-faint);}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none !important;}
+.btn .spinner{display:none;}
+.btn.loading .btn-label{opacity:0;}
+.btn.loading .spinner{display:block;position:absolute;}
 
-        .logo-container {
-            margin-bottom: 30px;
-        }
+.divider{display:flex;align-items:center;gap:12px;margin:6px 0 18px;color:var(--text-faint);font-size:12.5px;}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
 
-        .logo-container i {
-            font-size: 3rem;
-            color: var(--secondary);
-            margin-bottom: 10px;
-            animation: float 3s ease-in-out infinite;
-        }
+#lobby-error{
+  display:flex;gap:8px;align-items:flex-start;margin-top:14px;padding:11px 13px;
+  border-radius:var(--radius-sm);background:var(--danger-dim);color:var(--danger);
+  font-size:13px;line-height:1.4;
+}
+#lobby-error svg{width:15px;height:15px;flex:none;margin-top:1px;stroke:var(--danger);}
 
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
+.lobby-footer-note{margin-top:auto;padding-top:18px;font-size:12px;color:var(--text-faint);line-height:1.5;}
+.recent-codes{margin-top:6px;}
+.recent-codes-title{font-size:12.5px;color:var(--text-dim);font-weight:500;margin-bottom:8px;}
+.recent-chip{
+  display:inline-flex;align-items:center;gap:6px;margin:0 6px 6px 0;padding:6px 10px;
+  border-radius:99px;background:var(--surface-2);border:1px solid var(--line);
+  font-family:var(--font-mono);font-size:12px;color:var(--text-dim);cursor:pointer;
+  transition:border-color .15s var(--ease);
+}
+.recent-chip:hover{border-color:var(--signal);color:var(--text);}
 
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, var(--secondary), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+/* ==========================================================================
+   Call screen
+   ========================================================================== */
+#call-screen{background:var(--ink);}
+.stage{
+  position:absolute;inset:0;background:#05070c;
+  display:flex;align-items:center;justify-content:center;
+}
+#remote-video{width:100%;height:100%;object-fit:cover;background:#05070c;}
+.stage.mirrored-remote #remote-video{transform:scaleX(-1);}
 
-        p.subtitle {
-            color: #cbd5e1;
-            margin-bottom: 30px;
-            font-size: 0.9rem;
-        }
+.waiting-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  background:radial-gradient(900px 600px at 50% 40%, var(--surface), var(--ink));
+}
+.waiting-overlay.hidden{display:none;}
+.ring-avatar{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center;}
+.ring-avatar .avatar-circle{width:88px;height:88px;font-size:32px;z-index:2;}
+.ring-avatar .ring{
+  position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--signal);opacity:0;
+  animation:ringPulse 2.6s var(--ease) infinite;
+}
+.ring-avatar .ring:nth-child(2){animation-delay:.6s;}
+.ring-avatar .ring:nth-child(3){animation-delay:1.2s;}
+@keyframes ringPulse{
+  0%{transform:scale(.72);opacity:.55;}
+  100%{transform:scale(1.55);opacity:0;}
+}
+.waiting-text{text-align:center;}
+.waiting-text h2{font-size:19px;margin-bottom:6px;}
+.waiting-text p{color:var(--text-dim);font-size:13.5px;}
+.waiting-copy-btn{margin-top:6px;}
 
-        .action-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
+.local-tile{
+  position:absolute;width:190px;height:126px;border-radius:var(--radius-md);overflow:hidden;
+  border:1.5px solid var(--line-soft);box-shadow:var(--shadow-pop);
+  cursor:grab;background:var(--surface);z-index:20;
+  transition:box-shadow .25s var(--ease),border-color .25s var(--ease),width .25s var(--ease),height .25s var(--ease);
+  touch-action:none;
+}
+.local-tile.dragging{cursor:grabbing;transition:none;}
+.local-tile.speaking{border-color:var(--signal);box-shadow:0 0 0 3px var(--signal-dim),var(--shadow-pop);}
+.local-tile.minimized{width:64px;height:64px;border-radius:50%;}
+#local-video{width:100%;height:100%;object-fit:cover;}
+#local-video.mirror{transform:scaleX(-1);}
+.local-tile .avatar-fallback .avatar-circle{width:52px;height:52px;font-size:18px;}
+.tile-label{
+  position:absolute;left:8px;bottom:7px;font-size:11.5px;padding:3px 8px;border-radius:99px;
+  background:rgba(8,12,20,.55);backdrop-filter:blur(6px);color:#fff;
+}
+.local-tile.minimized .tile-label{display:none;}
+.mic-off-badge{
+  position:absolute;right:7px;bottom:7px;width:22px;height:22px;border-radius:50%;
+  background:var(--danger);display:flex;align-items:center;justify-content:center;
+}
+.mic-off-badge svg{width:11px;height:11px;stroke:#fff;}
+.mic-off-badge.hidden{display:none;}
 
-        input[type="text"] {
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            background: rgba(0,0,0,0.2);
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            transition: all 0.3s ease;
-            display: flex;
-            letter-spacing: 2px;
-        }
+.status-bar{
+  position:absolute;top:0;left:0;right:0;padding:16px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom, rgba(5,7,12,.55), transparent);
+  z-index:15;pointer-events:none;
+}
+.status-bar>*{pointer-events:auto;}
+.status-left{display:flex;align-items:center;gap:10px;}
+.status-right{display:flex;align-items:center;gap:10px;}
+.code-chip{
+  display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:99px;
+  background:rgba(14,20,31,.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);
+  cursor:pointer;transition:border-color .2s var(--ease);
+}
+.code-chip:hover{border-color:var(--signal);}
+.code-chip span{font-family:var(--font-mono);font-size:13px;letter-spacing:.02em;}
+.code-chip .copy-ico{
+  width:26px;height:26px;border-radius:50%;background:var(--surface-3);
+  display:flex;align-items:center;justify-content:center;
+}
+.code-chip .copy-ico svg{width:12px;height:12px;stroke:var(--text-dim);}
+.timer-chip{
+  padding:8px 13px;border-radius:99px;background:rgba(14,20,31,.6);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.08);font-family:var(--font-mono);font-size:13px;color:var(--text-dim);
+}
+.status-dot-wrap{
+  display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:99px;
+  background:rgba(14,20,31,.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);
+  font-size:12px;color:var(--text-dim);
+}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);transition:background .3s var(--ease);}
+.status-dot.connecting{background:var(--warm);animation:dotPulse 1.1s ease-in-out infinite;}
+.status-dot.connected{background:var(--good);}
+.status-dot.reconnecting{background:var(--warm);animation:dotPulse .7s ease-in-out infinite;}
+.status-dot.failed{background:var(--danger);}
+@keyframes dotPulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+.network-bars{display:flex;align-items:flex-end;gap:2.5px;height:13px;padding:0 2px;}
+.network-bars i{display:block;width:3px;border-radius:1px;background:var(--text-faint);}
+.network-bars i:nth-child(1){height:5px;}
+.network-bars i:nth-child(2){height:9px;}
+.network-bars i:nth-child(3){height:13px;}
+.network-bars.q-good i{background:var(--good);}
+.network-bars.q-ok i:nth-child(1),.network-bars.q-ok i:nth-child(2){background:var(--warm);}
+.network-bars.q-poor i:nth-child(1){background:var(--danger);}
 
-        input[type="text"]:focus {
-            border-color: var(--secondary);
-            box-shadow: 0 0 10px rgba(0, 206, 201, 0.3);
-        }
+/* ==========================================================================
+   Controls bar
+   ========================================================================== */
+.controls-bar{
+  position:absolute;left:50%;bottom:22px;transform:translateX(-50%);
+  display:flex;align-items:center;gap:8px;padding:10px;border-radius:99px;
+  background:rgba(14,20,31,.68);backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow-soft);
+  z-index:30;
+}
+.ctrl-btn{
+  position:relative;width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;background:var(--surface-3);
+  transition:transform .16s var(--ease-spring),background .2s var(--ease);
+}
+.ctrl-btn svg{width:20px;height:20px;stroke:var(--text);}
+.ctrl-btn:hover{transform:translateY(-2px);}
+.ctrl-btn:active{transform:scale(.92);}
+.ctrl-btn.off{background:var(--danger);}
+.ctrl-btn.off svg{stroke:#fff;}
+.ctrl-btn.active{background:var(--signal);}
+.ctrl-btn.active svg{stroke:var(--signal-ink);}
+.ctrl-btn.leave{background:var(--danger);width:54px;}
+.ctrl-btn.leave svg{stroke:#fff;}
+.ctrl-btn.leave:hover{filter:brightness(1.1);}
+.ctrl-sep{width:1px;height:26px;background:var(--line);margin:0 2px;}
+.ctrl-badge{
+  position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;
+  background:var(--warm);color:var(--warm-ink);font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+.ctrl-badge.hidden{display:none;}
+.ctrl-tooltip{
+  position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(4px);
+  background:var(--ink-soft);color:var(--text);font-size:11.5px;padding:5px 9px;border-radius:6px;
+  white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s var(--ease),transform .15s var(--ease);
+  border:1px solid var(--line);
+}
+.ctrl-btn:hover .ctrl-tooltip{opacity:1;transform:translateX(-50%) translateY(0);}
 
-        button {
-            padding: 15px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
+.reactions-popover{
+  position:absolute;bottom:calc(100% + 14px);left:50%;transform:translateX(-50%) translateY(6px) scale(.94);
+  display:flex;gap:5px;padding:8px;border-radius:99px;
+  background:rgba(14,20,31,.85);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);
+  opacity:0;pointer-events:none;transition:all .18s var(--ease-spring);box-shadow:var(--shadow-pop);
+}
+.reactions-popover.open{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto;}
+.reaction-opt{
+  width:38px;height:38px;border-radius:50%;border:none;background:transparent;font-size:19px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:transform .15s var(--ease-spring),background .15s var(--ease);
+}
+.reaction-opt:hover{background:var(--surface-3);transform:scale(1.15);}
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
+.reactions-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:25;}
+.floating-reaction{
+  position:absolute;bottom:110px;font-size:30px;animation:floatUp 3.2s ease-out forwards;
+}
+@keyframes floatUp{
+  0%{transform:translateY(0) translateX(0) scale(.5) rotate(0deg);opacity:0;}
+  12%{opacity:1;transform:translateY(-30px) translateX(var(--drift,0px)) scale(1) rotate(var(--rot,0deg));}
+  100%{transform:translateY(-420px) translateX(var(--drift2,0px)) scale(1.05) rotate(var(--rot2,0deg));opacity:0;}
+}
 
-        .btn-primary:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
-        }
+/* ==========================================================================
+   Chat panel
+   ========================================================================== */
+.chat-panel{
+  position:absolute;top:0;right:0;bottom:0;width:min(380px,100%);
+  background:var(--surface);border-left:1px solid var(--line-soft);
+  display:flex;flex-direction:column;z-index:40;
+  transform:translateX(100%);transition:transform .32s var(--ease);
+  box-shadow:-20px 0 50px -20px rgba(0,0,0,.5);
+}
+.chat-panel.open{transform:translateX(0);}
+.chat-header{
+  display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;
+  border-bottom:1px solid var(--line-soft);
+}
+.chat-header h2{font-size:17px;}
+.chat-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;}
+.chat-empty{margin:auto;text-align:center;color:var(--text-faint);font-size:13px;max-width:220px;line-height:1.6;}
+.msg{max-width:82%;display:flex;flex-direction:column;gap:3px;animation:msgIn .28s var(--ease-spring) both;}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px) scale(.98);}to{opacity:1;transform:none;}}
+.msg.me{align-self:flex-end;align-items:flex-end;}
+.msg.them{align-self:flex-start;align-items:flex-start;}
+.msg .bubble{padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.45;word-break:break-word;}
+.msg.me .bubble{background:var(--signal);color:var(--signal-ink);border-bottom-right-radius:5px;}
+.msg.them .bubble{background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:5px;}
+.msg .meta{font-size:10.5px;color:var(--text-faint);padding:0 3px;}
+.msg.system{align-self:center;}
+.msg.system .bubble{background:transparent;color:var(--text-faint);font-size:12px;border:none;padding:2px 6px;}
+.typing-indicator{
+  padding:0 18px 8px;display:flex;align-items:center;gap:7px;color:var(--text-faint);font-size:12px;
+  height:0;overflow:hidden;transition:height .2s var(--ease);
+}
+.typing-indicator.show{height:24px;}
+.typing-dots{display:flex;gap:3px;}
+.typing-dots span{width:4px;height:4px;border-radius:50%;background:var(--text-faint);animation:typingBounce 1.2s infinite ease-in-out;}
+.typing-dots span:nth-child(2){animation-delay:.15s;}
+.typing-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-3px);opacity:1;}}
+.chat-input-row{display:flex;gap:8px;padding:14px;border-top:1px solid var(--line-soft);}
+.chat-input-row input{
+  flex:1;height:42px;border-radius:99px;border:1px solid var(--line);background:var(--surface-2);
+  padding:0 16px;font-size:14px;color:var(--text);
+}
+.chat-input-row input:focus{border-color:var(--signal);}
+.chat-send-btn{
+  width:42px;height:42px;border-radius:50%;border:none;background:var(--signal);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex:none;transition:transform .15s var(--ease-spring);
+}
+.chat-send-btn svg{width:17px;height:17px;stroke:var(--signal-ink);}
+.chat-send-btn:active{transform:scale(.9);}
+.chat-send-btn:disabled{opacity:.4;cursor:not-allowed;}
 
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid var(--secondary);
-            color: var(--secondary);
-        }
+/* ==========================================================================
+   Modals
+   ========================================================================== */
+.modal-overlay{
+  position:absolute;inset:0;background:rgba(4,6,11,.55);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:60;
+  animation:overlayIn .2s var(--ease) both;
+}
+@keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
+.modal{
+  width:min(420px,92vw);background:var(--surface);border:1px solid var(--line-soft);
+  border-radius:var(--radius-lg);padding:26px;box-shadow:var(--shadow-soft);
+  animation:modalIn .28s var(--ease-spring) both;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:none;}}
+.modal-sm{width:min(360px,92vw);}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-head h2{font-size:18px;}
+.modal-field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.modal-field label{font-size:12.5px;color:var(--text-dim);font-weight:500;}
+.modal-field select{
+  height:44px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface-2);
+  color:var(--text);padding:0 12px;font-size:14px;
+}
+.modal-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+.modal-row label{font-size:14px;}
+.switch{position:relative;width:42px;height:24px;flex:none;}
+.switch input{opacity:0;width:100%;height:100%;margin:0;position:absolute;cursor:pointer;z-index:1;}
+.switch-track{
+  position:absolute;inset:0;background:var(--surface-3);border-radius:99px;transition:background .2s var(--ease);
+  border:1px solid var(--line);
+}
+.switch-thumb{
+  position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--text-dim);
+  transition:transform .2s var(--ease-spring),background .2s var(--ease);
+}
+.switch input:checked ~ .switch-track{background:var(--signal-dim);border-color:var(--signal);}
+.switch input:checked ~ .switch-thumb{transform:translateX(18px);background:var(--signal);}
+.modal-actions{display:flex;gap:10px;margin-top:6px;}
+.modal-actions .btn{flex:1;}
+.modal p.modal-copy{color:var(--text-dim);font-size:13.5px;line-height:1.55;margin-bottom:20px;}
 
-        .btn-secondary:hover {
-            background: var(--secondary);
-            color: #000;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 206, 201, 0.4);
-        }
+/* ==========================================================================
+   Toasts
+   ========================================================================== */
+.toast-container{
+  position:absolute;top:18px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;gap:8px;z-index:80;align-items:center;
+  pointer-events:none;
+}
+.toast{
+  display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:99px;
+  background:rgba(16,22,34,.92);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);
+  font-size:13.5px;box-shadow:var(--shadow-pop);
+  animation:toastIn .3s var(--ease-spring) both;pointer-events:auto;
+}
+.toast.leaving{animation:toastOut .22s var(--ease) forwards;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px) scale(.94);}to{opacity:1;transform:none;}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px) scale(.96);}}
+.toast svg{width:15px;height:15px;flex:none;}
+.toast.success svg{stroke:var(--good);}
+.toast.error svg{stroke:var(--danger);}
+.toast.info svg{stroke:var(--signal);}
 
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            color: #64748b;
-            margin: 20px 0;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .divider:not(:empty)::before { margin-right: .25em; }
-        .divider:not(:empty)::after { margin-left: .25em; }
+/* ==========================================================================
+   Loading spinner
+   ========================================================================== */
+.spinner{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(0,0,0,.18);border-top-color:currentColor;animation:spin .7s linear infinite;}
+.spinner.on-dark{border:2.5px solid rgba(255,255,255,.22);border-top-color:#fff;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-        /* =========================================
-           CALL VIEW (VIDEO GRID & CONTROLS)
-           ========================================= */
-        #call-view {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: row;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width:880px){
+  .lobby-main{grid-template-columns:1fr;grid-template-rows:auto auto;overflow-y:auto;}
+  .lobby-hero{min-height:280px;}
+  .local-tile{width:118px;height:80px;}
+  .chat-panel{width:100%;border-left:none;}
+  .status-bar{padding:12px 12px;}
+  .timer-chip,.status-dot-wrap{display:none;}
+}
+@media (max-width:520px){
+  .controls-bar{gap:5px;padding:8px;bottom:14px;}
+  .ctrl-btn{width:44px;height:44px;}
+  .ctrl-sep{display:none;}
+  .lobby-hero-controls{gap:8px;}
+}
 
-        .video-container {
-            flex: 1;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .header-info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .room-badge {
-            background: rgba(0,0,0,0.6);
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            letter-spacing: 2px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid var(--glass-border);
-        }
-
-        .copy-btn {
-            background: none;
-            border: none;
-            color: var(--secondary);
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .timer-badge {
-            background: rgba(0,0,0,0.6);
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-variant-numeric: tabular-nums;
-            border: 1px solid var(--glass-border);
-        }
-
-        .video-grid {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            height: calc(100% - 100px);
-            position: relative;
-        }
-
-        /* Remote Video (Main) */
-        #remote-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 20px;
-            background: #000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        /* Local Video (Floating PIP style) */
-        #local-video {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 250px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 2px solid var(--glass-border);
-            background: #111;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-            z-index: 5;
-            transition: transform 0.3s ease;
-        }
-        
-        #local-video:hover {
-            transform: scale(1.05);
-        }
-
-        /* Loading / Waiting state */
-        .waiting-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 2;
-        }
-        .waiting-message i {
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 10px;
-            animation: spin 2s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* =========================================
-           CONTROL BAR
-           ========================================= */
-        .controls-bar {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            padding: 15px 25px;
-            z-index: 10;
-        }
-
-        .control-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            position: relative;
-        }
-
-        .control-btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-5px);
-        }
-
-        .control-btn.active-danger {
-            background: var(--danger);
-            color: white;
-        }
-        .control-btn.active-danger:hover { background: #d63031; }
-
-        .control-btn.active-primary {
-            background: var(--primary);
-        }
-
-        /* Tooltip */
-        .control-btn::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        .control-btn:hover::after { opacity: 1; }
-
-        .btn-leave {
-            background: var(--danger);
-            width: 70px;
-            border-radius: 25px;
-        }
-        .btn-leave:hover { background: #d63031; }
-
-        /* =========================================
-           CHAT SIDEBAR & MEME PICKER
-           ========================================= */
-        #chat-sidebar {
-            width: var(--panel-width);
-            height: 100%;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid var(--glass-border);
-            display: flex;
-            flex-direction: column;
-            position: absolute;
-            right: calc(-1 * var(--panel-width)); /* Hidden by default */
-            top: 0;
-            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 20;
-        }
-
-        #chat-sidebar.open {
-            right: 0;
-        }
-
-        .chat-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--glass-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-header h3 {
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .close-chat {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: color 0.3s;
-        }
-        .close-chat:hover { color: white; }
-
-        .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        /* Custom Scrollbar for chat */
-        .chat-messages::-webkit-scrollbar { width: 6px; }
-        .chat-messages::-webkit-scrollbar-track { background: transparent; }
-        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-
-        .message {
-            max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            word-wrap: break-word;
-            animation: slideInMsg 0.3s ease;
-        }
-
-        @keyframes slideInMsg {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message.self {
-            align-self: flex-end;
-            background: var(--primary);
-            color: white;
-            border-bottom-right-radius: 2px;
-        }
-
-        .message.remote {
-            align-self: flex-start;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid var(--glass-border);
-            color: white;
-            border-bottom-left-radius: 2px;
-        }
-
-        .msg-time {
-            display: block;
-            font-size: 0.7rem;
-            margin-top: 5px;
-            opacity: 0.7;
-            text-align: right;
-        }
-        
-        .chat-meme-img {
-            max-width: 100%;
-            border-radius: 10px;
-            margin-top: 5px;
-            display: block;
-        }
-
-        .chat-input-area {
-            padding: 20px;
-            border-top: 1px solid var(--glass-border);
-            display: flex;
-            gap: 10px;
-            position: relative;
-        }
-
-        .chat-input-area input {
-            flex: 1;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--glass-border);
-            padding: 10px 15px;
-            border-radius: 20px;
-            color: white;
-            outline: none;
-            width: 100%;
-            letter-spacing: normal; /* Override the login one */
-        }
-        .chat-input-area input:focus { border-color: var(--primary); }
-
-        .chat-input-area button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            padding: 0;
-            flex-shrink: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        #btn-send-msg { background: var(--primary); }
-
-        /* Meme Picker Styles */
-        #meme-picker {
-            position: absolute;
-            bottom: 80px;
-            left: 0;
-            width: 100%;
-            height: 380px; /* Increased slightly to fit search bar */
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid var(--glass-border);
-            display: none;
-            flex-direction: column;
-            z-index: 30;
-            border-top-left-radius: 20px;
-        }
-        
-        #meme-picker.open { display: flex; }
-        
-        .meme-picker-header {
-            padding: 10px 15px;
-            font-weight: 600;
-            border-bottom: 1px solid var(--glass-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Meme Search Bar Styles */
-        .meme-search-container {
-            padding: 10px 15px;
-            border-bottom: 1px solid var(--glass-border);
-            display: flex;
-            gap: 8px;
-        }
-        
-        .meme-search-container input {
-            flex: 1;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--glass-border);
-            padding: 8px 12px;
-            border-radius: 8px;
-            color: white;
-            outline: none;
-            font-size: 0.85rem;
-            letter-spacing: normal; /* Override the login one */
-        }
-        
-        .meme-search-container input:focus { border-color: var(--primary); }
-        
-        .meme-search-container button {
-            background: var(--primary);
-            border: none;
-            color: white;
-            width: 35px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .meme-search-container button:hover { background: var(--primary-hover); }
-        
-        #meme-grid {
-            flex: 1;
-            overflow-y: auto;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            padding: 10px;
-        }
-        
-        #meme-grid::-webkit-scrollbar { width: 6px; }
-        #meme-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-        
-        .meme-item {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            background: rgba(255,255,255,0.05);
-        }
-        
-        .meme-item:hover { transform: scale(1.05); }
-        
-        .btn-load-more {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 0.9rem;
-            transition: background 0.3s;
-        }
-        
-        .btn-load-more:hover { background: rgba(255,255,255,0.2); }
-
-        /* =========================================
-           TOAST NOTIFICATIONS
-           ========================================= */
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            background: rgba(15, 23, 42, 0.9);
-            border-left: 4px solid var(--primary);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideInToast 0.4s ease, fadeOutToast 0.4s ease 3s forwards;
-        }
-
-        .toast.success { border-left-color: var(--success); }
-        .toast.error { border-left-color: var(--danger); }
-
-        @keyframes slideInToast {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes fadeOutToast {
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 768px) {
-            #local-video { width: 150px; height: 100px; }
-            .controls-bar { width: 95%; flex-wrap: wrap; justify-content: center; }
-            #chat-sidebar { width: 100%; right: -100%; }
-        }
-    </style>
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+}
+</style>
 </head>
 <body>
+<div id="app">
 
-    <!-- Background Canvas for Particles -->
-    <canvas id="bg-canvas"></canvas>
+  <!-- ============================== LOBBY ============================== -->
+  <section id="lobby-screen" class="screen">
+    <header class="lobby-header">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="50" r="46" fill="var(--surface-3)"/>
+          <path d="M20 55c10-18 20-26 30-26s20 8 30 26" stroke="var(--signal)" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <path d="M28 68c8-13 15-19 22-19s14 6 22 19" stroke="var(--warm)" stroke-width="7" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-name">Gawynt Video</span>
+      </div>
+      <button id="theme-toggle-btn" class="icon-btn" title="Toggle theme" aria-label="Toggle theme"></button>
+    </header>
 
-    <!-- Main App Container -->
-    <div id="app">
-        
-        <!-- =========================================
-             LANDING VIEW
-             ========================================= -->
-        <div id="landing-view" class="glass-panel">
-            <div class="logo-container">
-                <i class="fa-solid fa-video"></i>
-            </div>
-            <h1>Gawynt Video</h1>
-            <p class="subtitle">Secure, high-quality peer-to-peer video calls.</p>
-            
-            <div class="action-group">
-                <button id="btn-create" class="btn-primary">
-                    <i class="fa-solid fa-plus"></i> Generate a Call Code
-                </button>
-            </div>
-            
-            <div class="divider">OR</div>
-            
-            <div class="action-group">
-                <input type="text" id="call-code-input" placeholder="Enter 6-digit Code here...">
-                <button id="btn-join" class="btn-secondary">
-                    <i class="fa-solid fa-right-to-bracket"></i> Join Call
-                </button>
-            </div>
+    <main class="lobby-main">
+      <section class="lobby-hero" id="lobby-hero">
+        <video id="lobby-video" autoplay muted playsinline></video>
+        <div class="avatar-fallback" id="lobby-avatar"><div class="avatar-circle" id="lobby-avatar-circle">Y</div></div>
+        <div class="lobby-hero-top">
+          <span class="pill"><span class="dot"></span> Camera preview</span>
+        </div>
+        <p class="lobby-hint">This is what the other person will see when you join.</p>
+        <div class="lobby-hero-controls">
+          <button class="mini-toggle" id="lobby-mic-btn" title="Toggle microphone" aria-label="Toggle microphone"></button>
+          <button class="mini-toggle" id="lobby-cam-btn" title="Toggle camera" aria-label="Toggle camera"></button>
+        </div>
+      </section>
+
+      <aside class="lobby-panel">
+        <h1>Start or join a call</h1>
+        <p class="lobby-sub">Gawynt Video connects two people instantly with a call code — no account, no install.</p>
+
+        <div class="field">
+          <label for="display-name-input">Your name</label>
+          <input id="display-name-input" type="text" maxlength="24" placeholder="e.g. Sam" autocomplete="off" />
         </div>
 
-        <!-- =========================================
-             CALL VIEW
-             ========================================= -->
-        <div id="call-view">
-            <div class="video-container" id="video-container">
-                <!-- Info Header -->
-                <div class="header-info glass-panel">
-                    <div class="room-badge">
-                        <i class="fa-solid fa-fingerprint"></i>
-                        <span id="display-room-id">...</span>
-                        <button class="copy-btn" id="btn-copy-code" title="Copy Code">
-                            <i class="fa-regular fa-copy"></i>
-                        </button>
-                    </div>
-                    <div class="timer-badge" id="call-timer">00:00</div>
-                </div>
+        <button id="create-call-btn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <span class="btn-label">Create a call</span>
+          <span class="spinner on-dark"></span>
+        </button>
 
-                <!-- Video Grid -->
-                <div class="video-grid">
-                    <video id="remote-video" autoplay playsinline></video>
-                    <video id="local-video" autoplay playsinline muted></video>
-                    
-                    <div id="waiting-overlay" class="waiting-message">
-                        <i class="fa-solid fa-circle-notch"></i>
-                        <h2>Waiting for others to join...</h2>
-                        <p>Share the call code to start.</p>
-                    </div>
-                </div>
+        <div class="divider">or join with a code</div>
 
-                <!-- Control Bar -->
-                <div class="controls-bar glass-panel">
-                    <button class="control-btn" id="btn-toggle-mic" data-tooltip="Microphone (M)">
-                        <i class="fa-solid fa-microphone"></i>
-                    </button>
-                    <button class="control-btn" id="btn-toggle-cam" data-tooltip="Camera (V)">
-                        <i class="fa-solid fa-video"></i>
-                    </button>
-                    <button class="control-btn" id="btn-share-screen" data-tooltip="Share Screen">
-                        <i class="fa-solid fa-desktop"></i>
-                    </button>
-                    <button class="control-btn" id="btn-pip" data-tooltip="Picture in Picture">
-                        <i class="fa-solid fa-clone"></i>
-                    </button>
-                    <button class="control-btn" id="btn-toggle-chat" data-tooltip="Toggle Chat">
-                        <i class="fa-solid fa-message"></i>
-                    </button>
-                    <button class="control-btn btn-leave" id="btn-leave" data-tooltip="Leave Call">
-                        <i class="fa-solid fa-phone-slash"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Chat Sidebar -->
-            <div id="chat-sidebar">
-                <div class="chat-header">
-                    <h3><i class="fa-solid fa-comments"></i> Chat</h3>
-                    <button class="close-chat" id="btn-close-chat"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="chat-messages" id="chat-messages">
-                    <!-- Messages go here -->
-                    <div style="text-align:center; font-size: 0.8rem; color:#64748b; margin-top: 10px;">
-                        End-to-end encrypted chat via WebRTC
-                    </div>
-                </div>
-                
-                <!-- Meme Picker Overlay -->
-                <div id="meme-picker">
-                    <div class="meme-picker-header">
-                        <span>Select a Meme</span>
-                        <button id="btn-close-meme" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <!-- Added Meme Search Section -->
-                    <div class="meme-search-container">
-                        <input type="text" id="meme-search-input" placeholder="Search topics (e.g. cats, me_irl)...">
-                        <button id="btn-search-meme" title="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
-                    </div>
-                    <!-- /Added Meme Search Section -->
-                    <div id="meme-grid"></div>
-                    <button class="btn-load-more" id="btn-load-memes">Load More Memes</button>
-                </div>
-
-                <div class="chat-input-area">
-                    <button id="btn-toggle-meme" class="btn-secondary" title="Send Meme">
-                        <i class="fa-solid fa-face-grin-tears"></i>
-                    </button>
-                    <input type="text" id="chat-input" placeholder="Type a message...">
-                    <button id="btn-send-msg" class="btn-primary">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
+        <div class="field">
+          <label for="join-code-input">Call code</label>
+          <input id="join-code-input" type="text" placeholder="e.g. breeze-harbor-42" autocomplete="off" />
         </div>
+        <button id="join-call-btn" class="btn btn-secondary">
+          <span class="btn-label">Join call</span>
+          <span class="spinner"></span>
+        </button>
+
+        <p id="lobby-error" class="hidden"></p>
+
+        <div class="lobby-footer-note">
+          <div class="recent-codes hidden" id="recent-codes-wrap">
+            <div class="recent-codes-title">Recent codes</div>
+            <div id="recent-codes-list"></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </section>
+
+  <!-- ============================== CALL SCREEN ============================== -->
+  <section id="call-screen" class="screen hidden">
+    <div class="stage" id="stage">
+      <video id="remote-video" autoplay playsinline></video>
+
+      <div class="waiting-overlay" id="remote-placeholder">
+        <div class="ring-avatar">
+          <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+          <div class="avatar-circle" id="waiting-avatar-circle">?</div>
+        </div>
+        <div class="waiting-text">
+          <h2 id="waiting-title">Waiting for someone to join…</h2>
+          <p id="waiting-sub">Share your call code to invite them.</p>
+        </div>
+        <button class="btn btn-secondary waiting-copy-btn" id="waiting-copy-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span class="btn-label">Copy invite link</span>
+        </button>
+      </div>
+
+      <div class="local-tile" id="local-tile">
+        <video id="local-video" autoplay muted playsinline class="mirror"></video>
+        <div class="avatar-fallback" id="local-avatar"><div class="avatar-circle" id="local-avatar-circle">Y</div></div>
+        <span class="tile-label">You</span>
+        <span class="mic-off-badge hidden" id="local-mic-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="2" y1="2" x2="22" y2="22"/><path d="M9 9v3a3 3 0 0 0 4.7 2.5M15 9.34V5a3 3 0 0 0-5.94-.6"/><path d="M17 11a5 5 0 0 1-8.6 3.5M5 11a7 7 0 0 0 10.3 6.15"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        </span>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="code-chip" id="topbar-code-chip" title="Copy invite link">
+            <span id="topbar-code-text">——</span>
+            <span class="copy-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
+          </div>
+          <div class="timer-chip" id="call-timer">00:00</div>
+        </div>
+        <div class="status-right">
+          <div class="network-bars q-good" id="network-quality" title="Connection quality"><i></i><i></i><i></i></div>
+          <div class="status-dot-wrap"><span class="status-dot connecting" id="connection-status"></span><span id="connection-status-text">Connecting…</span></div>
+        </div>
+      </div>
+
+      <div class="reactions-layer" id="reactions-layer"></div>
     </div>
 
-    <!-- Toast Notifications Container -->
-    <div id="toast-container"></div>
-
-    <!-- =========================================
-         JAVASCRIPT & FIREBASE WEBRTC LOGIC
-         ========================================= -->
-    <!-- Using ES Modules for Firebase Modular SDK -->
-    <script type="module">
-        if (window.location.protocol === 'file:') {
-            console.warn("⚠️ WARNING: Running via 'file://'. If you encounter CORS or permission errors, please host it using a local server (like Live Server).");
-        }
-
-        // Import Firebase SDKs (using official CDN for modular v10)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-        // ==========================================
-        // 1. FIREBASE CONFIGURATION (Provided by User)
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBuWWnqDX5mUra5pF3uuBxEVSKjcESifTk",
-            authDomain: "gawynt-hub.firebaseapp.com",
-            databaseURL: "https://gawynt-hub-default-rtdb.firebaseio.com",
-            projectId: "gawynt-hub",
-            storageBucket: "gawynt-hub.firebasestorage.app",
-            messagingSenderId: "330651852035",
-            appId: "1:330651852035:web:db931f867da21b6a519d36",
-            measurementId: "G-XLXGTVSPXT"
-        };
-
-        // Initialize Firebase & Firestore
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // ==========================================
-        // 2. GLOBAL VARIABLES & WEBRTC CONFIG
-        // ==========================================
-        let localStream = null;
-        let remoteStream = null;
-        let peerConnection = null;
-        let dataChannel = null;
-        let roomId = null;
-        let timerInterval = null;
-        let secondsElapsed = 0;
-        let isCaller = false;
-        
-        let currentMemeQuery = "";
-
-        // Firebase Listener Unsubscribers
-        let unsubCall = null;
-        let unsubOffer = null;
-        let unsubAnswer = null;
-
-        // Standard Google STUN Servers for ICE Candidate discovery
-        const rtcConfiguration = {
-            iceServers: [
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ]
-        };
-
-        // DOM Elements
-        const landingView = document.getElementById('landing-view');
-        const callView = document.getElementById('call-view');
-        const localVideo = document.getElementById('local-video');
-        const remoteVideo = document.getElementById('remote-video');
-        const callCodeInput = document.getElementById('call-code-input');
-        const displayRoomId = document.getElementById('display-room-id');
-        const waitingOverlay = document.getElementById('waiting-overlay');
-        const chatSidebar = document.getElementById('chat-sidebar');
-        const videoContainer = document.getElementById('video-container');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chat-input');
-        
-        // Meme Elements
-        const memePicker = document.getElementById('meme-picker');
-        const memeGrid = document.getElementById('meme-grid');
-        const btnToggleMeme = document.getElementById('btn-toggle-meme');
-        const btnCloseMeme = document.getElementById('btn-close-meme');
-        const btnLoadMemes = document.getElementById('btn-load-memes');
-        const memeSearchInput = document.getElementById('meme-search-input');
-        const btnSearchMeme = document.getElementById('btn-search-meme');
-
-        // Buttons
-        const btnCreate = document.getElementById('btn-create');
-        const btnJoin = document.getElementById('btn-join');
-        const btnToggleMic = document.getElementById('btn-toggle-mic');
-        const btnToggleCam = document.getElementById('btn-toggle-cam');
-        const btnShareScreen = document.getElementById('btn-share-screen');
-        const btnPip = document.getElementById('btn-pip');
-        const btnToggleChat = document.getElementById('btn-toggle-chat');
-        const btnCloseChat = document.getElementById('btn-close-chat');
-        const btnLeave = document.getElementById('btn-leave');
-        const btnCopyCode = document.getElementById('btn-copy-code');
-        const btnSendMsg = document.getElementById('btn-send-msg');
-
-        // ==========================================
-        // 3. UI HELPERS & TOASTS
-        // ==========================================
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            let icon = 'fa-circle-info';
-            if(type === 'success') icon = 'fa-check-circle';
-            if(type === 'error') icon = 'fa-exclamation-circle';
-
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                if(container.contains(toast)) container.removeChild(toast);
-            }, 3400);
-        }
-
-        function switchView(toCall) {
-            if (toCall) {
-                landingView.style.opacity = '0';
-                setTimeout(() => {
-                    landingView.style.display = 'none';
-                    callView.style.display = 'flex';
-                    void callView.offsetWidth;
-                    callView.style.opacity = '1';
-                }, 500);
-            } else {
-                callView.style.opacity = '0';
-                setTimeout(() => {
-                    callView.style.display = 'none';
-                    landingView.style.display = 'block';
-                    void landingView.offsetWidth;
-                    landingView.style.opacity = '1';
-                }, 500);
-            }
-        }
-
-        function formatTime(sec) {
-            const m = Math.floor(sec / 60).toString().padStart(2, '0');
-            const s = (sec % 60).toString().padStart(2, '0');
-            return `${m}:${s}`;
-        }
-
-        function startTimer() {
-            secondsElapsed = 0;
-            document.getElementById('call-timer').innerText = "00:00";
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                secondsElapsed++;
-                document.getElementById('call-timer').innerText = formatTime(secondsElapsed);
-            }, 1000);
-        }
-
-        function stopTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            document.getElementById('call-timer').innerText = "00:00";
-        }
-
-        // ==========================================
-        // 4. MEDIA STREAM INITIALIZATION
-        // ==========================================
-        async function getLocalMedia() {
-            try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    showToast("Camera/Microphone access requires a secure connection (HTTPS or localhost).", "error");
-                    console.error("navigator.mediaDevices is undefined. Secure context required.");
-                    return false;
-                }
-
-                localStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-                    audio: true
-                });
-                localVideo.srcObject = localStream;
-                return true;
-            } catch (error) {
-                console.error("Error accessing media devices.", error);
-                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                    showToast("Camera/Microphone blocked! Check browser site settings.", "error");
-                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-                    showToast("No camera or microphone found on this device.", "error");
-                } else {
-                    showToast("Error accessing Camera/Microphone. Check browser settings.", "error");
-                }
-                return false;
-            }
-        }
-
-        // ==========================================
-        // 5. WEBRTC SIGNALING (FIRESTORE)
-        // ==========================================
-        
-        function initPeerConnection() {
-            peerConnection = new RTCPeerConnection(rtcConfiguration);
-
-            remoteStream = new MediaStream();
-            remoteVideo.srcObject = remoteStream;
-
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
-
-            peerConnection.ontrack = event => {
-                event.streams[0].getTracks().forEach(track => {
-                    remoteStream.addTrack(track);
-                });
-                waitingOverlay.style.display = 'none';
-                startTimer();
-                showToast("Peer connected!", "success");
-            };
-
-            peerConnection.onconnectionstatechange = () => {
-                if(peerConnection && (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed' || peerConnection.connectionState === 'closed')) {
-                    showToast("User disconnected.", "error");
-                    hangUp();
-                }
-            };
-        }
-
-        function setupDataChannel(isCallerSide) {
-            if (isCallerSide) {
-                dataChannel = peerConnection.createDataChannel("chat-channel");
-                dataChannel.onmessage = handleReceiveMessage;
-                dataChannel.onopen = () => console.log("Data channel opened");
-            } else {
-                peerConnection.ondatachannel = (event) => {
-                    dataChannel = event.channel;
-                    dataChannel.onmessage = handleReceiveMessage;
-                    dataChannel.onopen = () => console.log("Data channel opened");
-                };
-            }
-        }
-
-        // CREATE A CALL (Caller)
-        async function createCall() {
-            try {
-                if (!await getLocalMedia()) return;
-                isCaller = true;
-                switchView(true);
-                
-                initPeerConnection();
-                setupDataChannel(true);
-
-                roomId = Math.floor(100000 + Math.random() * 900000).toString();
-                
-                const callDoc = doc(db, "calls", roomId);
-                displayRoomId.innerText = roomId;
-
-                const offerCandidates = collection(callDoc, "offerCandidates");
-                const answerCandidates = collection(callDoc, "answerCandidates");
-
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        const candidateObj = {
-                            candidate: event.candidate.candidate,
-                            sdpMid: event.candidate.sdpMid,
-                            sdpMLineIndex: event.candidate.sdpMLineIndex
-                        };
-                        addDoc(offerCandidates, candidateObj).catch(err => console.error("Error adding offer candidate:", err));
-                    }
-                };
-
-                const offerDescription = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offerDescription);
-
-                const offer = {
-                    sdp: offerDescription.sdp,
-                    type: offerDescription.type,
-                };
-
-                await setDoc(callDoc, { offer });
-                showToast("Call code generated! Share it to connect.", "success");
-
-                unsubCall = onSnapshot(callDoc, (snapshot) => {
-                    const data = snapshot.data();
-                    if (peerConnection && !peerConnection.currentRemoteDescription && data?.answer) {
-                        peerConnection.setRemoteDescription(data.answer).catch(e => console.error("Error setting remote desc:", e));
-                    }
-                });
-
-                unsubAnswer = onSnapshot(answerCandidates, (snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === "added") {
-                            const candidate = new RTCIceCandidate(change.doc.data());
-                            if (peerConnection && peerConnection.remoteDescription) {
-                                peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding ICE candidate:", e));
-                            } else {
-                                setTimeout(() => {
-                                    if (peerConnection && peerConnection.remoteDescription) {
-                                        peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding deferred ICE candidate:", e));
-                                    }
-                                }, 1500);
-                            }
-                        }
-                    });
-                });
-            } catch (error) {
-                console.error("Error creating call:", error);
-                if (error.code === 'permission-denied') {
-                    showToast("Firebase Permission Denied! Check Firestore Rules.", "error");
-                    alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}");
-                } else {
-                    showToast(`Failed to create call: ${error.name || 'Error'} - ${error.message || 'See console for details.'}`, "error");
-                }
-                hangUp();
-            }
-        }
-
-        // JOIN A CALL (Callee) REBUILT LOGIC
-        async function joinCall() {
-            try {
-                btnJoin.disabled = true;
-
-                const inputCode = callCodeInput.value.trim();
-                
-                // 1. Strict validation check for valid 6 digit code format
-                if (!inputCode || inputCode.length !== 6 || isNaN(inputCode)) {
-                    showToast("Please enter a valid 6-digit call code.", "error");
-                    btnJoin.disabled = false;
-                    return;
-                }
-
-                // 2. Fetch the existing call room data
-                const callDoc = doc(db, "calls", inputCode);
-                const callSnapshot = await getDoc(callDoc);
-                
-                // 3. Validation: Does room exist?
-                if (!callSnapshot.exists()) {
-                    showToast("Call code not found. The host may have hung up.", "error");
-                    btnJoin.disabled = false;
-                    return;
-                }
-                
-                const callData = callSnapshot.data();
-                if (!callData || !callData.offer) {
-                    showToast("Call is no longer valid or incomplete.", "error");
-                    btnJoin.disabled = false;
-                    return;
-                }
-
-                // 4. SECURITY FIX: Prevent hijacking. If an answer exists, room is already active!
-                if (callData.answer) {
-                    showToast("Room is full! This call is already active with another user.", "error");
-                    btnJoin.disabled = false;
-                    return;
-                }
-
-                // 5. Ask for Media permissions ONLY if room is valid and open
-                if (!await getLocalMedia()) {
-                    btnJoin.disabled = false;
-                    return;
-                }
-                
-                isCaller = false;
-                roomId = inputCode;
-                displayRoomId.innerText = roomId;
-                switchView(true);
-
-                initPeerConnection();
-                setupDataChannel(false);
-
-                const offerCandidates = collection(callDoc, "offerCandidates");
-                const answerCandidates = collection(callDoc, "answerCandidates");
-
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        const candidateObj = {
-                            candidate: event.candidate.candidate,
-                            sdpMid: event.candidate.sdpMid,
-                            sdpMLineIndex: event.candidate.sdpMLineIndex
-                        };
-                        addDoc(answerCandidates, candidateObj).catch(err => console.error("Error adding answer candidate:", err));
-                    }
-                };
-
-                const offerDescription = callData.offer;
-                await peerConnection.setRemoteDescription(offerDescription);
-
-                const answerDescription = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answerDescription);
-
-                const answer = {
-                    type: answerDescription.type,
-                    sdp: answerDescription.sdp,
-                };
-
-                await updateDoc(callDoc, { answer });
-                waitingOverlay.style.display = 'none';
-
-                unsubOffer = onSnapshot(offerCandidates, (snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === "added") {
-                            const candidate = new RTCIceCandidate(change.doc.data());
-                            if (peerConnection && peerConnection.remoteDescription) {
-                                peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding ICE candidate:", e));
-                            } else {
-                                setTimeout(() => {
-                                    if (peerConnection && peerConnection.remoteDescription) {
-                                        peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding deferred ICE candidate:", e));
-                                    }
-                                }, 1500); 
-                            }
-                        }
-                    });
-                });
-                
-                btnJoin.disabled = false;
-            } catch (error) {
-                console.error("Error joining call:", error);
-                if (error.code === 'permission-denied') {
-                    showToast("Firebase Rules blocked access! Please update console rules.", "error");
-                    alert("FIREBASE PERMISSIONS EXPIRED:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}");
-                } else {
-                    showToast(`Error joining call: ${error.name || 'Error'} - ${error.message || 'Check console for details.'}`, "error");
-                }
-                btnJoin.disabled = false;
-                hangUp(); // Safe reset if something goes wrong midway
-            }
-        }
-
-        // HANG UP & CLEANUP
-        async function hangUp() {
-            // Clean up Firestore document if caller hangs up, preventing hanging dangling rooms that trigger false connection errors
-            if (roomId && isCaller) {
-                try {
-                    await deleteDoc(doc(db, "calls", roomId));
-                } catch (e) {
-                    console.error("Error cleaning up room:", e);
-                }
-            }
-
-            if (unsubCall) unsubCall();
-            if (unsubOffer) unsubOffer();
-            if (unsubAnswer) unsubAnswer();
-            unsubCall = null;
-            unsubOffer = null;
-            unsubAnswer = null;
-
-            if (peerConnection) {
-                peerConnection.close();
-                peerConnection = null;
-            }
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            if (remoteStream) {
-                remoteStream.getTracks().forEach(track => track.stop());
-                remoteStream = null;
-            }
-            
-            stopTimer();
-            waitingOverlay.style.display = 'block';
-            chatMessages.innerHTML = '';
-            
-            btnToggleMic.classList.remove('active-danger');
-            btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-            btnToggleCam.classList.remove('active-danger');
-            btnToggleCam.innerHTML = '<i class="fa-solid fa-video"></i>';
-            btnShareScreen.classList.remove('active-primary');
-            
-            chatSidebar.classList.remove('open');
-            memePicker.classList.remove('open');
-            videoContainer.style.width = '100%';
-
-            switchView(false);
-            showToast("You left the call.", "info");
-        }
-
-        // ==========================================
-        // 6. CONTROL BAR LOGIC (Mic, Cam, Screen)
-        // ==========================================
-        
-        btnToggleMic.addEventListener('click', () => {
-            if (!localStream) return;
-            const audioTrack = localStream.getAudioTracks()[0];
-            if (!audioTrack) {
-                showToast("No microphone found.", "error");
-                return;
-            }
-            if (audioTrack.enabled) {
-                audioTrack.enabled = false;
-                btnToggleMic.classList.add('active-danger');
-                btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
-                showToast("Microphone muted", "info");
-            } else {
-                audioTrack.enabled = true;
-                btnToggleMic.classList.remove('active-danger');
-                btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-                showToast("Microphone unmuted", "info");
-            }
-        });
-
-        btnToggleCam.addEventListener('click', () => {
-            if (!localStream) return;
-            const videoTrack = localStream.getVideoTracks()[0];
-            if (!videoTrack) {
-                showToast("No camera found.", "error");
-                return;
-            }
-            if (videoTrack.enabled) {
-                videoTrack.enabled = false;
-                btnToggleCam.classList.add('active-danger');
-                btnToggleCam.innerHTML = '<i class="fa-solid fa-video-slash"></i>';
-                showToast("Camera turned off", "info");
-            } else {
-                videoTrack.enabled = true;
-                btnToggleCam.classList.remove('active-danger');
-                btnToggleCam.innerHTML = '<i class="fa-solid fa-video"></i>';
-                showToast("Camera turned on", "info");
-            }
-        });
-
-        let screenStream = null;
-        btnShareScreen.addEventListener('click', async () => {
-            if (!screenStream) {
-                try {
-                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                    const screenTrack = screenStream.getVideoTracks()[0];
-                    
-                    const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
-                    if (sender) sender.replaceTrack(screenTrack);
-                    localVideo.srcObject = screenStream;
-                    
-                    btnShareScreen.classList.add('active-primary');
-                    showToast("Screen sharing started", "success");
-
-                    screenTrack.onended = () => stopScreenShare();
-                } catch (error) {
-                    console.error("Error sharing screen", error);
-                    showToast("Could not share screen", "error");
-                }
-            } else {
-                stopScreenShare();
-            }
-        });
-
-        function stopScreenShare() {
-            if(!screenStream) return;
-            screenStream.getTracks().forEach(track => track.stop());
-            screenStream = null;
-            
-            const videoTrack = localStream ? localStream.getVideoTracks()[0] : null;
-            const sender = peerConnection ? peerConnection.getSenders().find(s => s.track && s.track.kind === 'video') : null;
-            if(sender && videoTrack) sender.replaceTrack(videoTrack);
-            
-            if (localVideo && localStream) localVideo.srcObject = localStream;
-            btnShareScreen.classList.remove('active-primary');
-            showToast("Screen sharing stopped", "info");
-        }
-
-        btnPip.addEventListener('click', async () => {
-            if (document.pictureInPictureElement) {
-                document.exitPictureInPicture();
-            } else if (document.pictureInPictureEnabled && remoteVideo.readyState === 4) {
-                try {
-                    await remoteVideo.requestPictureInPicture();
-                } catch (error) {
-                    showToast("PiP not supported or failed", "error");
-                }
-            }
-        });
-
-        // ==========================================
-        // 7. CHAT & MEME SYSTEM LOGIC
-        // ==========================================
-        
-        function toggleChat() {
-            const isOpen = chatSidebar.classList.contains('open');
-            if (isOpen) {
-                chatSidebar.classList.remove('open');
-                memePicker.classList.remove('open');
-            } else {
-                chatSidebar.classList.add('open');
-            }
-        }
-
-        btnToggleChat.addEventListener('click', toggleChat);
-        btnCloseChat.addEventListener('click', toggleChat);
-
-        btnToggleMeme.addEventListener('click', () => {
-            memePicker.classList.toggle('open');
-            if (memePicker.classList.contains('open') && memeGrid.children.length === 0) {
-                currentMemeQuery = "";
-                memeSearchInput.value = "";
-                fetchMemes(true);
-            }
-        });
-
-        btnCloseMeme.addEventListener('click', () => memePicker.classList.remove('open'));
-        btnLoadMemes.addEventListener('click', () => fetchMemes(false));
-        
-        btnSearchMeme.addEventListener('click', () => {
-            currentMemeQuery = memeSearchInput.value.trim();
-            fetchMemes(true);
-        });
-
-        memeSearchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                currentMemeQuery = memeSearchInput.value.trim();
-                fetchMemes(true);
-            }
-        });
-
-        async function fetchMemes(reset = false) {
-            if (reset) {
-                memeGrid.innerHTML = '';
-            }
-            const originalText = btnLoadMemes.innerText;
-            btnLoadMemes.innerText = "Loading Memes...";
-            try {
-                let url = 'https://meme-api.com/gimme/20';
-                if (currentMemeQuery) {
-                    const safeQuery = encodeURIComponent(currentMemeQuery.replace(/\s+/g, ''));
-                    url = `https://meme-api.com/gimme/${safeQuery}/20`;
-                }
-
-                const response = await fetch(url);
-                if (!response.ok) throw new Error("API Error or Topic not found");
-                
-                const data = await response.json();
-                
-                if (data.memes && data.memes.length > 0) {
-                    data.memes.forEach(meme => {
-                        const img = document.createElement('img');
-                        img.src = meme.url;
-                        img.className = 'meme-item';
-                        img.loading = "lazy";
-                        img.title = meme.title;
-                        img.onclick = () => {
-                            sendMeme(meme.url);
-                            memePicker.classList.remove('open');
-                        };
-                        memeGrid.appendChild(img);
-                    });
-                } else {
-                    showToast("No memes found for this topic.", "error");
-                }
-            } catch (error) {
-                console.error("Error loading memes:", error);
-                showToast("Failed to load memes (Topic might not exist)", "error");
-            }
-            btnLoadMemes.innerText = originalText;
-        }
-
-        function sendMeme(url) {
-            if (!dataChannel || dataChannel.readyState !== 'open') {
-                showToast("Chat not connected yet", "error");
-                return;
-            }
-            const payload = `[MEME]${url}`;
-            dataChannel.send(payload);
-            appendMessage(payload, true);
-        }
-
-        function appendMessage(text, isSelf) {
-            const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message');
-            msgDiv.classList.add(isSelf ? 'self' : 'remote');
-            
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            let contentHTML = text;
-            
-            if (typeof text === 'string' && text.startsWith('[MEME]')) {
-                const url = text.replace('[MEME]', '');
-                contentHTML = `<img src="${url}" class="chat-meme-img" alt="Sent Meme">`;
-            } else {
-                contentHTML = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            }
-            
-            msgDiv.innerHTML = `
-                ${contentHTML}
-                <span class="msg-time">${timeStr}</span>
-            `;
-            chatMessages.appendChild(msgDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function sendMessage() {
-            const text = chatInput.value.trim();
-            if (!text || !dataChannel || dataChannel.readyState !== 'open') {
-                if(text && (!dataChannel || dataChannel.readyState !== 'open')) {
-                    showToast("Chat not connected yet", "error");
-                }
-                return;
-            }
-            
-            dataChannel.send(text);
-            appendMessage(text, true);
-            chatInput.value = '';
-        }
-
-        function handleReceiveMessage(event) {
-            appendMessage(event.data, false);
-            if(!chatSidebar.classList.contains('open')) {
-                showToast("New message received!", "info");
-            }
-        }
-
-        btnSendMsg.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        // ==========================================
-        // 8. MISC EVENT LISTENERS
-        // ==========================================
-        
-        btnCreate.addEventListener('click', createCall);
-        btnJoin.addEventListener('click', joinCall);
-        btnLeave.addEventListener('click', hangUp);
-
-        btnCopyCode.addEventListener('click', () => {
-            if (roomId) {
-                navigator.clipboard.writeText(roomId);
-                showToast("Code copied to clipboard!", "success");
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if(callView.style.display === 'flex' && document.activeElement !== chatInput && document.activeElement !== memeSearchInput) {
-                if (e.key.toLowerCase() === 'm') btnToggleMic.click();
-                if (e.key.toLowerCase() === 'v') btnToggleCam.click();
-            }
-        });
-
-        callCodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') joinCall();
-        });
-
-        // ==========================================
-        // 9. BACKGROUND PARTICLE ANIMATION LOGIC
-        // ==========================================
-        
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        const particleCount = 80;
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 0.5;
-                this.vy = (Math.random() - 0.5) * 0.5;
-                this.radius = Math.random() * 2 + 1;
-            }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
-                if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(108, 92, 231, 0.5)';
-                ctx.fill();
-            }
-        }
-
-        for (let i = 0; i < particleCount; i++) {
-            particles.push(new Particle());
-        }
-
-        function animateCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
-                
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < 120) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = `rgba(0, 206, 201, ${1 - dist / 120})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.stroke();
-                    }
-                }
-            }
-            requestAnimationFrame(animateCanvas);
-        }
-        animateCanvas();
-
-    </script>
+    <div class="controls-bar" id="controls-bar">
+      <button class="ctrl-btn" id="toggle-mic-btn" aria-label="Toggle microphone"><span class="ctrl-tooltip">Mute</span></button>
+      <button class="ctrl-btn" id="toggle-cam-btn" aria-label="Toggle camera"><span class="ctrl-tooltip">Turn off camera</span></button>
+      <button class="ctrl-btn" id="toggle-screenshare-btn" aria-label="Share screen"><span class="ctrl-tooltip">Share screen</span></button>
+      <div class="ctrl-sep"></div>
+      <button class="ctrl-btn" id="reactions-btn" aria-label="Send a reaction">
+        <span class="ctrl-tooltip">Reactions</span>
+        <div class="reactions-popover" id="reactions-popover">
+          <button class="reaction-opt" data-emoji="👍">👍</button>
+          <button class="reaction-opt" data-emoji="❤">❤</button>
+          <button class="reaction-opt" data-emoji="😂">😂</button>
+          <button class="reaction-opt" data-emoji="🎉">🎉</button>
+          <button class="reaction-opt" data-emoji="👏">👏</button>
+          <button class="reaction-opt" data-emoji="🙌">🙌</button>
+        </div>
+      </button>
+      <button class="ctrl-btn" id="toggle-chat-btn" aria-label="Toggle chat">
+        <span class="ctrl-tooltip">Chat</span>
+        <span class="ctrl-badge hidden" id="chat-unread-badge">0</span>
+      </button>
+      <div class="ctrl-sep"></div>
+      <button class="ctrl-btn" id="pip-btn" aria-label="Picture in picture"><span class="ctrl-tooltip">Picture-in-picture</span></button>
+      <button class="ctrl-btn" id="fullscreen-btn" aria-label="Toggle fullscreen"><span class="ctrl-tooltip">Fullscreen</span></button>
+      <button class="ctrl-btn" id="settings-btn" aria-label="Settings"><span class="ctrl-tooltip">Settings</span></button>
+      <button class="ctrl-btn leave" id="leave-btn" aria-label="Leave call"><span class="ctrl-tooltip">Leave call</span></button>
+    </div>
+
+    <aside class="chat-panel" id="chat-panel">
+      <div class="chat-header">
+        <h2>Chat</h2>
+        <button class="icon-btn" id="chat-close-btn" aria-label="Close chat"></button>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-empty" id="chat-empty">No messages yet. Say hello — chat is sent directly between you two.</div>
+      </div>
+      <div class="typing-indicator" id="typing-indicator">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+        <span id="typing-indicator-text">typing…</span>
+      </div>
+      <div class="chat-input-row">
+        <input id="chat-input" type="text" placeholder="Message…" maxlength="500" autocomplete="off" />
+        <button class="chat-send-btn" id="chat-send-btn" aria-label="Send message"></button>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============================== SETTINGS MODAL ============================== -->
+  <div class="modal-overlay hidden" id="settings-modal-overlay">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Settings</h2>
+        <button class="icon-btn" id="settings-close-btn" aria-label="Close settings"></button>
+      </div>
+      <div class="modal-field">
+        <label for="camera-select">Camera</label>
+        <select id="camera-select"></select>
+      </div>
+      <div class="modal-field">
+        <label for="mic-select">Microphone</label>
+        <select id="mic-select"></select>
+      </div>
+      <div class="modal-field" id="speaker-field">
+        <label for="speaker-select">Speaker</label>
+        <select id="speaker-select"></select>
+      </div>
+      <div class="modal-row">
+        <label for="mirror-toggle">Mirror my video</label>
+        <div class="switch">
+          <input type="checkbox" id="mirror-toggle" checked />
+          <div class="switch-track"></div><div class="switch-thumb"></div>
+        </div>
+      </div>
+      <div class="modal-row">
+        <label for="sound-toggle">Sound on join / leave</label>
+        <div class="switch">
+          <input type="checkbox" id="sound-toggle" checked />
+          <div class="switch-track"></div><div class="switch-thumb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== LEAVE MODAL ============================== -->
+  <div class="modal-overlay hidden" id="leave-modal-overlay">
+    <div class="modal modal-sm">
+      <div class="modal-head"><h2>Leave the call?</h2></div>
+      <p class="modal-copy">The call will end for both of you if the other person hasn't already left. You can start a new call anytime.</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="leave-cancel-btn"><span class="btn-label">Stay</span></button>
+        <button class="btn" id="leave-confirm-btn" style="background:var(--danger);color:#fff;"><span class="btn-label">Leave</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+</div>
+
+<script type="module">
+/* JS_PLACEHOLDER */
+</script>
 </body>
 </html>
