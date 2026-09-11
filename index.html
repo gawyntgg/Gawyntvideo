@@ -978,7 +978,7 @@
             } catch (error) {
                 console.error("Error accessing media devices.", error);
                 if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                    showToast("Camera/Microphone blocked! Please allow permissions in your browser.", "error");
+                    showToast("Camera/Microphone blocked! Check browser site settings.", "error");
                 } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
                     showToast("No camera or microphone found on this device.", "error");
                 } else {
@@ -1109,23 +1109,27 @@
             }
         }
 
-        // JOIN A CALL (Callee)
+        // JOIN A CALL (Callee) REBUILT LOGIC
         async function joinCall() {
             try {
                 btnJoin.disabled = true;
 
                 const inputCode = callCodeInput.value.trim();
-                if (!inputCode) {
-                    showToast("Please enter a valid call code.", "error");
+                
+                // 1. Strict validation check for valid 6 digit code format
+                if (!inputCode || inputCode.length !== 6 || isNaN(inputCode)) {
+                    showToast("Please enter a valid 6-digit call code.", "error");
                     btnJoin.disabled = false;
                     return;
                 }
 
+                // 2. Fetch the existing call room data
                 const callDoc = doc(db, "calls", inputCode);
                 const callSnapshot = await getDoc(callDoc);
                 
+                // 3. Validation: Does room exist?
                 if (!callSnapshot.exists()) {
-                    showToast("Call code not found. Please check and try again.", "error");
+                    showToast("Call code not found. The host may have hung up.", "error");
                     btnJoin.disabled = false;
                     return;
                 }
@@ -1137,6 +1141,14 @@
                     return;
                 }
 
+                // 4. SECURITY FIX: Prevent hijacking. If an answer exists, room is already active!
+                if (callData.answer) {
+                    showToast("Room is full! This call is already active with another user.", "error");
+                    btnJoin.disabled = false;
+                    return;
+                }
+
+                // 5. Ask for Media permissions ONLY if room is valid and open
                 if (!await getLocalMedia()) {
                     btnJoin.disabled = false;
                     return;
@@ -1199,19 +1211,19 @@
             } catch (error) {
                 console.error("Error joining call:", error);
                 if (error.code === 'permission-denied') {
-                    showToast("Firebase Permission Denied! Check Firestore Rules.", "error");
-                    alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}");
+                    showToast("Firebase Rules blocked access! Please update console rules.", "error");
+                    alert("FIREBASE PERMISSIONS EXPIRED:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}");
                 } else {
                     showToast("Error joining call. Check console/permissions.", "error");
                 }
                 btnJoin.disabled = false;
-                hangUp();
+                hangUp(); // Safe reset if something goes wrong midway
             }
         }
 
         // HANG UP & CLEANUP
         async function hangUp() {
-            // FIX: Clean up Firestore document if caller hangs up, preventing hanging dangling rooms that trigger false connection errors
+            // Clean up Firestore document if caller hangs up, preventing hanging dangling rooms that trigger false connection errors
             if (roomId && isCaller) {
                 try {
                     await deleteDoc(doc(db, "calls", roomId));
