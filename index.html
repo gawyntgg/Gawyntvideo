@@ -809,16 +809,13 @@
          ========================================= -->
     <!-- Using ES Modules for Firebase Modular SDK -->
     <script type="module">
-        // FIX: Check if running via local file protocol. Instead of a blocking alert, 
-        // we log it to the console to prevent annoying the user before clicking join, 
-        // as modern browsers often support WebRTC on file:// anyway.
         if (window.location.protocol === 'file:') {
             console.warn("⚠️ WARNING: Running via 'file://'. If you encounter CORS or permission errors, please host it using a local server (like Live Server).");
         }
 
         // Import Firebase SDKs (using official CDN for modular v10)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // ==========================================
         // 1. FIREBASE CONFIGURATION (Provided by User)
@@ -848,10 +845,11 @@
         let roomId = null;
         let timerInterval = null;
         let secondsElapsed = 0;
+        let isCaller = false;
         
-        let currentMemeQuery = ""; // Tracks search state for the meme loader
+        let currentMemeQuery = "";
 
-        // Firebase Listener Unsubscribers (CRITICAL FIX FOR MEMORY/GHOST ERRORS)
+        // Firebase Listener Unsubscribers
         let unsubCall = null;
         let unsubOffer = null;
         let unsubAnswer = null;
@@ -914,7 +912,6 @@
             toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
             container.appendChild(toast);
             
-            // Remove after animation (3.4s)
             setTimeout(() => {
                 if(container.contains(toast)) container.removeChild(toast);
             }, 3400);
@@ -926,7 +923,6 @@
                 setTimeout(() => {
                     landingView.style.display = 'none';
                     callView.style.display = 'flex';
-                    // Trigger reflow
                     void callView.offsetWidth;
                     callView.style.opacity = '1';
                 }, 500);
@@ -967,7 +963,6 @@
         // ==========================================
         async function getLocalMedia() {
             try {
-                // FIX: Check if mediaDevices exists (prevents console crash on insecure networks like HTTP IPs)
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                     showToast("Camera/Microphone access requires a secure connection (HTTPS or localhost).", "error");
                     console.error("navigator.mediaDevices is undefined. Secure context required.");
@@ -982,7 +977,6 @@
                 return true;
             } catch (error) {
                 console.error("Error accessing media devices.", error);
-                // FIX: Better error handling to explain exactly why permission failed
                 if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
                     showToast("Camera/Microphone blocked! Please allow permissions in your browser.", "error");
                 } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
@@ -998,41 +992,35 @@
         // 5. WEBRTC SIGNALING (FIRESTORE)
         // ==========================================
         
-        // Initialize PeerConnection and add tracks
         function initPeerConnection() {
             peerConnection = new RTCPeerConnection(rtcConfiguration);
 
             remoteStream = new MediaStream();
             remoteVideo.srcObject = remoteStream;
 
-            // Add local tracks to PC
             localStream.getTracks().forEach(track => {
                 peerConnection.addTrack(track, localStream);
             });
 
-            // Listen for remote tracks
             peerConnection.ontrack = event => {
                 event.streams[0].getTracks().forEach(track => {
                     remoteStream.addTrack(track);
                 });
-                // Hide waiting overlay when we get remote video
                 waitingOverlay.style.display = 'none';
                 startTimer();
                 showToast("Peer connected!", "success");
             };
 
-            // Connection state changes
             peerConnection.onconnectionstatechange = () => {
-                if(peerConnection && (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed')) {
+                if(peerConnection && (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed' || peerConnection.connectionState === 'closed')) {
                     showToast("User disconnected.", "error");
                     hangUp();
                 }
             };
         }
 
-        // Setup Data Channel for Chat
-        function setupDataChannel(isCaller) {
-            if (isCaller) {
+        function setupDataChannel(isCallerSide) {
+            if (isCallerSide) {
                 dataChannel = peerConnection.createDataChannel("chat-channel");
                 dataChannel.onmessage = handleReceiveMessage;
                 dataChannel.onopen = () => console.log("Data channel opened");
@@ -1048,8 +1036,8 @@
         // CREATE A CALL (Caller)
         async function createCall() {
             try {
-                // FIX: Request camera and microphone permissions BEFORE joining or generating codes
                 if (!await getLocalMedia()) return;
+                isCaller = true;
                 switchView(true);
                 
                 initPeerConnection();
@@ -1063,10 +1051,8 @@
                 const offerCandidates = collection(callDoc, "offerCandidates");
                 const answerCandidates = collection(callDoc, "answerCandidates");
 
-                // Get ICE candidates and save to Firestore safely
                 peerConnection.onicecandidate = event => {
                     if (event.candidate) {
-                        // FIX: Explicitly mapping properties guarantees Firebase will not crash during serialization
                         const candidateObj = {
                             candidate: event.candidate.candidate,
                             sdpMid: event.candidate.sdpMid,
@@ -1076,7 +1062,6 @@
                     }
                 };
 
-                // Create Offer
                 const offerDescription = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offerDescription);
 
@@ -1088,7 +1073,6 @@
                 await setDoc(callDoc, { offer });
                 showToast("Call code generated! Share it to connect.", "success");
 
-                // Listen for remote Answer
                 unsubCall = onSnapshot(callDoc, (snapshot) => {
                     const data = snapshot.data();
                     if (peerConnection && !peerConnection.currentRemoteDescription && data?.answer) {
@@ -1097,12 +1081,10 @@
                     }
                 });
 
-                // Listen for remote ICE candidates
                 unsubAnswer = onSnapshot(answerCandidates, (snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
                             const candidate = new RTCIceCandidate(change.doc.data());
-                            // FIX: Prevent race condition by ensuring RemoteDescription is set before adding ICE candidate
                             if (peerConnection && peerConnection.remoteDescription) {
                                 peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding ICE candidate:", e));
                             } else {
@@ -1110,18 +1092,16 @@
                                     if (peerConnection && peerConnection.remoteDescription) {
                                         peerConnection.addIceCandidate(candidate).catch(e => console.error("Error adding deferred ICE candidate:", e));
                                     }
-                                }, 1500); // 1.5s queue delay gives the connection time to align
+                                }, 1500);
                             }
                         }
                     });
                 });
             } catch (error) {
                 console.error("Error creating call:", error);
-                
-                // FIX: Specific intercept for Firebase permissions errors
                 if (error.code === 'permission-denied') {
-                    showToast("Firebase Permission Denied! See alert for fix.", "error");
-                    alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste the following:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}\n\nNote: For production, you should secure these later.");
+                    showToast("Firebase Permission Denied! Check Firestore Rules.", "error");
+                    alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}");
                 } else {
                     showToast("Failed to create call. Check console.", "error");
                 }
@@ -1132,10 +1112,8 @@
         // JOIN A CALL (Callee)
         async function joinCall() {
             try {
-                // Prevent duplicate processing
                 btnJoin.disabled = true;
 
-                // Strip any accidental spaces out of the entered text
                 const inputCode = callCodeInput.value.trim();
                 if (!inputCode) {
                     showToast("Please enter a valid call code.", "error");
@@ -1152,7 +1130,6 @@
                     return;
                 }
                 
-                // Check to ensure data is present to prevent crashes
                 const callData = callSnapshot.data();
                 if (!callData || !callData.offer) {
                     showToast("Call is no longer valid or incomplete.", "error");
@@ -1160,12 +1137,12 @@
                     return;
                 }
 
-                // FIX: Request camera and microphone permissions BEFORE joining the call
                 if (!await getLocalMedia()) {
                     btnJoin.disabled = false;
                     return;
                 }
                 
+                isCaller = false;
                 roomId = inputCode;
                 displayRoomId.innerText = roomId;
                 switchView(true);
@@ -1176,10 +1153,8 @@
                 const offerCandidates = collection(callDoc, "offerCandidates");
                 const answerCandidates = collection(callDoc, "answerCandidates");
 
-                // Save ICE Candidates safely
                 peerConnection.onicecandidate = event => {
                     if (event.candidate) {
-                        // FIX: Explicitly mapping properties guarantees Firebase will not crash during serialization
                         const candidateObj = {
                             candidate: event.candidate.candidate,
                             sdpMid: event.candidate.sdpMid,
@@ -1189,11 +1164,9 @@
                     }
                 };
 
-                // Get Offer from Firestore
                 const offerDescription = callData.offer;
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
-                // Create Answer
                 const answerDescription = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answerDescription);
 
@@ -1203,9 +1176,8 @@
                 };
 
                 await updateDoc(callDoc, { answer });
-                waitingOverlay.style.display = 'none'; // Callee doesn't wait
+                waitingOverlay.style.display = 'none';
 
-                // Listen for caller ICE candidates
                 unsubOffer = onSnapshot(offerCandidates, (snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === "added") {
@@ -1226,11 +1198,9 @@
                 btnJoin.disabled = false;
             } catch (error) {
                 console.error("Error joining call:", error);
-                
-                // FIX: Specific intercept for Firebase permissions errors
                 if (error.code === 'permission-denied') {
-                    showToast("Firebase Permission Denied! See alert for fix.", "error");
-                    alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste the following:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}\n\nNote: For production, you should secure these later.");
+                    showToast("Firebase Permission Denied! Check Firestore Rules.", "error");
+                    alert("FIREBASE PERMISSIONS ERROR:\n\nYour Firestore database rules are blocking access.\n\nTo fix this, go to Firebase Console -> Firestore Database -> Rules, and paste:\n\nrules_version = '2';\nmatch /databases/{database}/documents {\n  match /{document=**} {\n    allow read, write: if true;\n  }\n}");
                 } else {
                     showToast("Error joining call. Check console/permissions.", "error");
                 }
@@ -1240,8 +1210,16 @@
         }
 
         // HANG UP & CLEANUP
-        function hangUp() {
-            // FIX: Purge old Firebase listeners so ghost callbacks don't attempt to access a null connection
+        async function hangUp() {
+            // FIX: Clean up Firestore document if caller hangs up, preventing hanging dangling rooms that trigger false connection errors
+            if (roomId && isCaller) {
+                try {
+                    await deleteDoc(doc(db, "calls", roomId));
+                } catch (e) {
+                    console.error("Error cleaning up room:", e);
+                }
+            }
+
             if (unsubCall) unsubCall();
             if (unsubOffer) unsubOffer();
             if (unsubAnswer) unsubAnswer();
@@ -1264,16 +1242,14 @@
             
             stopTimer();
             waitingOverlay.style.display = 'block';
-            chatMessages.innerHTML = ''; // Clear chat
+            chatMessages.innerHTML = '';
             
-            // Reset buttons
             btnToggleMic.classList.remove('active-danger');
             btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone"></i>';
             btnToggleCam.classList.remove('active-danger');
             btnToggleCam.innerHTML = '<i class="fa-solid fa-video"></i>';
             btnShareScreen.classList.remove('active-primary');
             
-            // Hide Sidebar & Meme Picker
             chatSidebar.classList.remove('open');
             memePicker.classList.remove('open');
             videoContainer.style.width = '100%';
@@ -1286,7 +1262,6 @@
         // 6. CONTROL BAR LOGIC (Mic, Cam, Screen)
         // ==========================================
         
-        // Toggle Mic
         btnToggleMic.addEventListener('click', () => {
             if (!localStream) return;
             const audioTrack = localStream.getAudioTracks()[0];
@@ -1307,7 +1282,6 @@
             }
         });
 
-        // Toggle Camera
         btnToggleCam.addEventListener('click', () => {
             if (!localStream) return;
             const videoTrack = localStream.getVideoTracks()[0];
@@ -1328,7 +1302,6 @@
             }
         });
 
-        // Screen Share
         let screenStream = null;
         btnShareScreen.addEventListener('click', async () => {
             if (!screenStream) {
@@ -1336,15 +1309,13 @@
                     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                     const screenTrack = screenStream.getVideoTracks()[0];
                     
-                    // Replace video track in peer connection
-                    const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
-                    sender.replaceTrack(screenTrack);
+                    const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) sender.replaceTrack(screenTrack);
                     localVideo.srcObject = screenStream;
                     
                     btnShareScreen.classList.add('active-primary');
                     showToast("Screen sharing started", "success");
 
-                    // Listen for user stopping screen share via browser UI
                     screenTrack.onended = () => stopScreenShare();
                 } catch (error) {
                     console.error("Error sharing screen", error);
@@ -1360,17 +1331,15 @@
             screenStream.getTracks().forEach(track => track.stop());
             screenStream = null;
             
-            // Revert to camera
-            const videoTrack = localStream.getVideoTracks()[0];
-            const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+            const videoTrack = localStream ? localStream.getVideoTracks()[0] : null;
+            const sender = peerConnection ? peerConnection.getSenders().find(s => s.track && s.track.kind === 'video') : null;
             if(sender && videoTrack) sender.replaceTrack(videoTrack);
             
-            localVideo.srcObject = localStream;
+            if (localVideo && localStream) localVideo.srcObject = localStream;
             btnShareScreen.classList.remove('active-primary');
             showToast("Screen sharing stopped", "info");
         }
 
-        // Picture-in-Picture
         btnPip.addEventListener('click', async () => {
             if (document.pictureInPictureElement) {
                 document.exitPictureInPicture();
@@ -1400,7 +1369,6 @@
         btnToggleChat.addEventListener('click', toggleChat);
         btnCloseChat.addEventListener('click', toggleChat);
 
-        // --- MEME API LOGIC ---
         btnToggleMeme.addEventListener('click', () => {
             memePicker.classList.toggle('open');
             if (memePicker.classList.contains('open') && memeGrid.children.length === 0) {
@@ -1413,7 +1381,6 @@
         btnCloseMeme.addEventListener('click', () => memePicker.classList.remove('open'));
         btnLoadMemes.addEventListener('click', () => fetchMemes(false));
         
-        // Handle Search Inputs
         btnSearchMeme.addEventListener('click', () => {
             currentMemeQuery = memeSearchInput.value.trim();
             fetchMemes(true);
@@ -1433,10 +1400,8 @@
             const originalText = btnLoadMemes.innerText;
             btnLoadMemes.innerText = "Loading Memes...";
             try {
-                // Fetching 20 random memes. If query is provided, use it as a subreddit filter.
                 let url = 'https://meme-api.com/gimme/20';
                 if (currentMemeQuery) {
-                    // Make search query URL safe and strip spaces
                     const safeQuery = encodeURIComponent(currentMemeQuery.replace(/\s+/g, ''));
                     url = `https://meme-api.com/gimme/${safeQuery}/20`;
                 }
@@ -1478,7 +1443,6 @@
             dataChannel.send(payload);
             appendMessage(payload, true);
         }
-        // ----------------------
 
         function appendMessage(text, isSelf) {
             const msgDiv = document.createElement('div');
@@ -1489,12 +1453,10 @@
             
             let contentHTML = text;
             
-            // Check if the incoming message is a meme
             if (typeof text === 'string' && text.startsWith('[MEME]')) {
                 const url = text.replace('[MEME]', '');
                 contentHTML = `<img src="${url}" class="chat-meme-img" alt="Sent Meme">`;
             } else {
-                // Sanitize normal text to prevent XSS
                 contentHTML = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
             }
             
@@ -1503,7 +1465,7 @@
                 <span class="msg-time">${timeStr}</span>
             `;
             chatMessages.appendChild(msgDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         function sendMessage() {
@@ -1515,7 +1477,6 @@
                 return;
             }
             
-            // Send via WebRTC DataChannel
             dataChannel.send(text);
             appendMessage(text, true);
             chatInput.value = '';
@@ -1523,7 +1484,6 @@
 
         function handleReceiveMessage(event) {
             appendMessage(event.data, false);
-            // Auto open chat if hidden
             if(!chatSidebar.classList.contains('open')) {
                 showToast("New message received!", "info");
             }
@@ -1549,16 +1509,13 @@
             }
         });
 
-        // Add keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            // Only if we are in a call and not typing in chat
             if(callView.style.display === 'flex' && document.activeElement !== chatInput && document.activeElement !== memeSearchInput) {
                 if (e.key.toLowerCase() === 'm') btnToggleMic.click();
                 if (e.key.toLowerCase() === 'v') btnToggleCam.click();
             }
         });
 
-        // Listens for Enter key press on the call code input specifically
         callCodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') joinCall();
         });
@@ -1608,7 +1565,6 @@
         function animateCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Draw particles and connect them
             for (let i = 0; i < particles.length; i++) {
                 particles[i].update();
                 particles[i].draw();
